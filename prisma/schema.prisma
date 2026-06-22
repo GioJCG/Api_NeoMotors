@@ -182,9 +182,10 @@ model Empresa {
   createdBy String?  @map("created_by")
   updatedBy String?  @map("updated_by")
 
-  usuarios          Usuario[]
-  sucursales        Sucursal[]
+  usuarios        Usuario[]
+  sucursales      Sucursal[]
   usuariosAsignados UsuarioEmpresa[]
+  clientes        Cliente[]
 
   @@map("Empresa")
 }
@@ -254,6 +255,30 @@ model Auditoria {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@map("Auditoria")
+}
+
+model Cliente {
+  id        String   @id @default(uuid()) @map("id")
+  empresaId String   @map("empresa_id")
+  nombre    String   @map("nombre")
+  rfc       String?  @map("rfc")
+  email     String?  @map("email")
+  telefono  String?  @map("telefono")
+  direccion String?  @map("direccion")
+  estado    String   @default("ACTIVO") @map("estado")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
+
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  @@unique([empresaId, rfc])
+  @@unique([empresaId, email])
+  @@index([empresaId])
+  @@index([nombre])
+  @@map("Cliente")
 }
 
 model SatPais {

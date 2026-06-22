@@ -9,6 +9,7 @@ import { EmpresasModule } from './modules/empresas/empresas.module';
 import { SucursalesModule } from './modules/sucursales/sucursales.module';
 import { ContextModule } from './modules/context/context.module';
 import { SatCatalogsModule } from './modules/sat-catalogs/sat-catalogs.module';
+import { ClientesModule } from './modules/clientes/clientes.module';
 import { RolesGuard } from './modules/rbac/guards/roles.guard';
 
 @Module({
@@ -22,6 +23,7 @@ import { RolesGuard } from './modules/rbac/guards/roles.guard';
     SucursalesModule,
     ContextModule,
     SatCatalogsModule,
+    ClientesModule,
   ],
   providers: [
     {
