@@ -320,6 +320,8 @@ export class AuthService {
         id: user.id,
         email: user.email,
         nombre: user.nombre,
+        companyId: user.companyId || null,
+        branchId: user.branchId || null,
         roles,
         permisos,
       },
@@ -327,7 +329,14 @@ export class AuthService {
   }
 
   private generateAccessToken(user: any, roles: string[] = [], permisos: string[] = []): string {
-    const payload = { sub: user.id, email: user.email, roles, permisos };
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      companyId: user.companyId || null,
+      branchId: user.branchId || null,
+      roles,
+      permisos,
+    };
     return this.jwtService.sign(payload);
   }
 
