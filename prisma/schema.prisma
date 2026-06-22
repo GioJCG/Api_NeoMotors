@@ -1,0 +1,49 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserStatus {
+  PENDIENTE
+  ACTIVO
+  INACTIVO
+  BLOQUEADO
+}
+
+model Usuario {
+  id           String     @id @default(uuid()) @map("id")
+  email        String     @unique @map("email")
+  passwordHash String     @map("password_hash")
+  nombre       String?    @map("nombre")
+  estado       UserStatus @default(PENDIENTE) @map("estado")
+
+  companyId String? @map("company_id")
+  branchId  String? @map("branch_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
+
+  verificaciones VerificacionCuenta[]
+
+  @@map("Usuario")
+}
+
+model VerificacionCuenta {
+  id        String   @id @default(uuid()) @map("id")
+  usuarioId String   @map("usuario_id")
+  token     String   @unique @map("token")
+  expiraEn  DateTime @map("expira_en")
+  usado     Boolean  @default(false) @map("usado")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@map("VerificacionCuenta")
+}
