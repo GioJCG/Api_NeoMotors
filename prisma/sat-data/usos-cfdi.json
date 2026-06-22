@@ -1,0 +1,23 @@
+[
+  { "codigo": "G01", "nombre": "Adquisición de mercancías", "tipo": "fisica_moral" },
+  { "codigo": "G02", "nombre": "Devoluciones, descuentos o bonificaciones", "tipo": "fisica_moral" },
+  { "codigo": "G03", "nombre": "Gastos en general", "tipo": "fisica_moral" },
+  { "codigo": "I01", "nombre": "Construcciones", "tipo": "fisica_moral" },
+  { "codigo": "I02", "nombre": "Mobiliario y equipo de oficina por inversiones", "tipo": "fisica_moral" },
+  { "codigo": "I03", "nombre": "Equipo de transporte", "tipo": "fisica_moral" },
+  { "codigo": "I04", "nombre": "Equipo de cómputo y accesorios", "tipo": "fisica_moral" },
+  { "codigo": "I05", "nombre": "Dados, troqueles, moldes, matrices y herramental", "tipo": "fisica_moral" },
+  { "codigo": "I06", "nombre": "Comunicaciones telefónicas", "tipo": "fisica_moral" },
+  { "codigo": "I07", "nombre": "Comunicaciones satelitales", "tipo": "fisica_moral" },
+  { "codigo": "I08", "nombre": "Otra maquinaria y equipo", "tipo": "fisica_moral" },
+  { "codigo": "D01", "nombre": "Honorarios médicos, dentales y gastos hospitalarios", "tipo": "fisica" },
+  { "codigo": "D02", "nombre": "Gastos médicos por incapacidad o discapacidad", "tipo": "fisica" },
+  { "codigo": "D03", "nombre": "Gastos funerales", "tipo": "fisica" },
+  { "codigo": "D04", "nombre": "Donativos", "tipo": "fisica" },
+  { "codigo": "D05", "nombre": "Intereses reales efectivamente pagados por créditos hipotecarios", "tipo": "fisica" },
+  { "codigo": "D06", "nombre": "Aportaciones voluntarias al SAR", "tipo": "fisica" },
+  { "codigo": "D07", "nombre": "Primas por seguros de gastos médicos", "tipo": "fisica" },
+  { "codigo": "D08", "nombre": "Gastos de transportación escolar obligatoria", "tipo": "fisica" },
+  { "codigo": "D09", "nombre": "Depósitos en cuentas para el ahorro, primas que tengan como base planes de pensiones", "tipo": "fisica" },
+  { "codigo": "D10", "nombre": "Pagos por servicios educativos (colegiaturas)", "tipo": "fisica" }
+]

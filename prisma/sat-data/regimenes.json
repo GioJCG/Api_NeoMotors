@@ -1,0 +1,21 @@
+[
+  { "codigo": "601", "nombre": "General de Ley Personas Morales", "tipo": "moral" },
+  { "codigo": "603", "nombre": "Personas Morales con Fines no Lucrativos", "tipo": "moral" },
+  { "codigo": "605", "nombre": "Sueldos y Salarios e Ingresos Asimilados a Salarios", "tipo": "fisica" },
+  { "codigo": "606", "nombre": "Arrendamiento", "tipo": "fisica" },
+  { "codigo": "607", "nombre": "Régimen de Enajenación o Adquisición de Bienes", "tipo": "fisica" },
+  { "codigo": "608", "nombre": "Demás ingresos", "tipo": "fisica" },
+  { "codigo": "610", "nombre": "Residentes en el Extranjero sin Establecimiento Permanente en México", "tipo": "moral" },
+  { "codigo": "611", "nombre": "Ingresos por Dividendos (socios y accionistas)", "tipo": "fisica" },
+  { "codigo": "612", "nombre": "Personas Físicas con Actividades Empresariales y Profesionales", "tipo": "fisica" },
+  { "codigo": "614", "nombre": "Ingresos por intereses", "tipo": "fisica" },
+  { "codigo": "615", "nombre": "Régimen de los ingresos por obtención de premios", "tipo": "fisica" },
+  { "codigo": "616", "nombre": "Sin obligaciones fiscales", "tipo": "fisica" },
+  { "codigo": "620", "nombre": "Sociedades Cooperativas de Producción que optan por diferir sus ingresos", "tipo": "moral" },
+  { "codigo": "621", "nombre": "Incorporación Fiscal", "tipo": "fisica" },
+  { "codigo": "622", "nombre": "Actividades Agrícolas, Ganaderas, Silvícolas y Pesqueras", "tipo": "fisica" },
+  { "codigo": "623", "nombre": "Opcional para Grupos de Sociedades", "tipo": "moral" },
+  { "codigo": "624", "nombre": "Coordinados", "tipo": "moral" },
+  { "codigo": "625", "nombre": "Régimen de las Actividades Empresariales con ingresos a través de Plataformas Tecnológicas", "tipo": "fisica" },
+  { "codigo": "626", "nombre": "Régimen Simplificado de Confianza", "tipo": "fisica" }
+]

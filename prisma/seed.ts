@@ -1,4 +1,6 @@
 import { PrismaClient } from '@prisma/client';
+import * as fs from 'fs';
+import * as path from 'path';
 
 const prisma = new PrismaClient();
 
@@ -77,7 +79,7 @@ const ROLES: RolDef[] = [
   },
 ];
 
-async function main() {
+async function seedRbac() {
   const permisosCreados: { id: string; nombre: string }[] = [];
 
   for (const modulo of MODULOS) {
@@ -137,8 +139,76 @@ async function main() {
     update: {},
   });
   console.log(`Empresa default: ${empresaDefault.id}`);
+}
 
-  console.log('Seed RBAC completado exitosamente.');
+function loadJson<T>(filename: string): T[] {
+  const filePath = path.join(__dirname, '..', 'sat-data', filename);
+  return JSON.parse(fs.readFileSync(filePath, 'utf-8')) as T[];
+}
+
+async function seedSatCatalogs() {
+  const paises = loadJson<{ codigo: string; nombre: string }>('paises.json');
+  const estados = loadJson<{ codigo: string; nombre: string }>('estados.json');
+  const unidades = loadJson<{ codigo: string; nombre: string; simbolo: string }>('unidades.json');
+  const regimenes = loadJson<{ codigo: string; nombre: string; tipo: string }>('regimenes.json');
+  const usosCfdi = loadJson<{ codigo: string; nombre: string; tipo: string }>('usos-cfdi.json');
+
+  for (const p of paises) {
+    await prisma.satPais.upsert({
+      where: { codigo: p.codigo },
+      create: p,
+      update: {},
+    });
+  }
+  console.log(`SatPais: ${paises.length} registros`);
+
+  const paisMexico = await prisma.satPais.findUnique({ where: { codigo: 'MEX' } });
+  if (paisMexico) {
+    for (const e of estados) {
+      await prisma.satEstado.upsert({
+        where: { id: e.codigo },
+        create: { codigo: e.codigo, nombre: e.nombre, paisId: paisMexico.id },
+        update: {},
+      });
+    }
+    console.log(`SatEstado: ${estados.length} registros`);
+  }
+
+  for (const u of unidades) {
+    await prisma.satUnidadMedida.upsert({
+      where: { codigo: u.codigo },
+      create: u,
+      update: {},
+    });
+  }
+  console.log(`SatUnidadMedida: ${unidades.length} registros`);
+
+  for (const r of regimenes) {
+    await prisma.satRegimenFiscal.upsert({
+      where: { codigo: r.codigo },
+      create: r,
+      update: {},
+    });
+  }
+  console.log(`SatRegimenFiscal: ${regimenes.length} registros`);
+
+  for (const u of usosCfdi) {
+    await prisma.satUsoCfdi.upsert({
+      where: { codigo: u.codigo },
+      create: u,
+      update: {},
+    });
+  }
+  console.log(`SatUsoCfdi: ${usosCfdi.length} registros`);
+
+  console.log('Catálogos SAT cargados exitosamente.');
+}
+
+async function main() {
+  console.log('Iniciando seed...');
+  await seedRbac();
+  await seedSatCatalogs();
+  console.log('Seed completado exitosamente.');
 }
 
 main()
