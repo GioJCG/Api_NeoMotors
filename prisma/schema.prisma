@@ -36,6 +36,7 @@ model Usuario {
   refreshTokens       RefreshToken[]
   passwordResetTokens PasswordResetToken[]
   proveedoresSociales ProveedorSocial[]
+  empresa             Empresa?      @relation(fields: [companyId], references: [id])
   roles               UsuarioRol[]
 
   @@map("Usuario")
@@ -153,4 +154,70 @@ model UsuarioRol {
 
   @@unique([usuarioId, rolId, companyId])
   @@map("UsuarioRol")
+}
+
+enum EmpresaStatus {
+  ACTIVA
+  SUSPENDIDA
+  INACTIVA
+}
+
+model Empresa {
+  id                 String        @id @default(uuid()) @map("id")
+  nombre             String        @map("nombre")
+  rfc                String        @unique @map("rfc")
+  razonSocial        String        @map("razon_social")
+  codigoPostalFiscal String        @map("codigo_postal_fiscal")
+  regimenFiscal      String        @map("regimen_fiscal")
+  logoUrl            String?       @map("logo_url")
+  colorPrimario      String?       @map("color_primario")
+  colorSecundario    String?       @map("color_secundario")
+  tema               String?       @default("light") @map("tema")
+  estado             EmpresaStatus @default(ACTIVA) @map("estado")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
+
+  usuarios   Usuario[]
+  sucursales Sucursal[]
+
+  @@map("Empresa")
+}
+
+model Sucursal {
+  id         String  @id @default(uuid()) @map("id")
+  empresaId  String  @map("empresa_id")
+  nombre     String  @map("nombre")
+  direccion  String? @map("direccion")
+  telefono   String? @map("telefono")
+  esMatriz   Boolean @default(false) @map("es_matriz")
+  latitud    Float?  @map("latitud")
+  longitud   Float?  @map("longitud")
+  estado     String  @default("ACTIVA") @map("estado")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
+
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  @@map("Sucursal")
+}
+
+model Auditoria {
+  id        String   @id @default(uuid()) @map("id")
+  usuarioId String?  @map("usuario_id")
+  accion    String   @map("accion")
+  entidad   String   @map("entidad")
+  entidadId String?  @map("entidad_id")
+  payload   Json?    @map("payload")
+  contexto  String?  @map("contexto")
+  ip        String?  @map("ip")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("Auditoria")
 }

@@ -4,6 +4,8 @@ import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { RbacModule } from './modules/rbac/rbac.module';
+import { AuditoriaModule } from './modules/auditoria/auditoria.module';
+import { EmpresasModule } from './modules/empresas/empresas.module';
 import { RolesGuard } from './modules/rbac/guards/roles.guard';
 
 @Module({
@@ -12,6 +14,8 @@ import { RolesGuard } from './modules/rbac/guards/roles.guard';
     PrismaModule,
     AuthModule,
     RbacModule,
+    AuditoriaModule,
+    EmpresasModule,
   ],
   providers: [
     {
