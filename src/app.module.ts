@@ -6,6 +6,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { RbacModule } from './modules/rbac/rbac.module';
 import { AuditoriaModule } from './modules/auditoria/auditoria.module';
 import { EmpresasModule } from './modules/empresas/empresas.module';
+import { SucursalesModule } from './modules/sucursales/sucursales.module';
 import { RolesGuard } from './modules/rbac/guards/roles.guard';
 
 @Module({
@@ -16,6 +17,7 @@ import { RolesGuard } from './modules/rbac/guards/roles.guard';
     RbacModule,
     AuditoriaModule,
     EmpresasModule,
+    SucursalesModule,
   ],
   providers: [
     {
