@@ -36,6 +36,9 @@ model Usuario {
   refreshTokens        RefreshToken[]
   passwordResetTokens  PasswordResetToken[]
   proveedoresSociales  ProveedorSocial[]
+  verificaciones    VerificacionCuenta[]
+  refreshTokens     RefreshToken[]
+  passwordResetTokens PasswordResetToken[]
 
   @@map("Usuario")
 }

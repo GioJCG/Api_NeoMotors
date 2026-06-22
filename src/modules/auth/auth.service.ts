@@ -99,6 +99,7 @@ export class AuthService {
   }
 
   async login(dto: LoginDto) {
+  async login(dto: LoginDto, ip?: string) {
     const user = await this.prisma.usuario.findUnique({
       where: { email: dto.email.toLowerCase() },
     });
@@ -109,6 +110,7 @@ export class AuthService {
 
     if (user.estado === 'PENDIENTE') {
       throw new UnauthorizedException('La cuenta no ha sido verificada.');
+      throw new UnauthorizedException('La cuenta no ha sido verificada. Revise su correo.');
     }
 
     if (user.estado === 'INACTIVO' || user.estado === 'BLOQUEADO') {
@@ -138,6 +140,10 @@ export class AuthService {
       }
 
       await this.prisma.usuario.update({ where: { id: user.id }, data: updateData });
+      await this.prisma.usuario.update({
+        where: { id: user.id },
+        data: updateData,
+      });
 
       const remainingAttempts = this.MAX_LOGIN_ATTEMPTS - newAttempts;
       throw new UnauthorizedException(
@@ -208,6 +214,19 @@ export class AuthService {
     });
 
     return this.generateAuthTokens(newUser);
+    const accessToken = this.generateAccessToken(user);
+    const refreshToken = await this.generateRefreshToken(user);
+
+    return {
+      accessToken,
+      refreshToken: refreshToken.token,
+      expiresIn: this.configService.get<string>('JWT_EXPIRATION'),
+      user: {
+        id: user.id,
+        email: user.email,
+        nombre: user.nombre,
+      },
+    };
   }
 
   async forgotPassword(dto: ForgotPasswordDto) {
@@ -225,6 +244,11 @@ export class AuthService {
 
     await this.prisma.passwordResetToken.create({
       data: { usuarioId: user.id, token: resetToken, expiraEn: expirationDate },
+      data: {
+        usuarioId: user.id,
+        token: resetToken,
+        expiraEn: expirationDate,
+      },
     });
 
     return {
@@ -286,6 +310,24 @@ export class AuthService {
       data: {
         usuarioId: user.id,
         token: refreshTokenValue,
+      message: 'Contraseña restablecida exitosamente. Puede iniciar sesión con su nueva contraseña.',
+    };
+  }
+
+  private generateAccessToken(user: any): string {
+    const payload = { sub: user.id, email: user.email };
+    return this.jwtService.sign(payload);
+  }
+
+  private async generateRefreshToken(user: any) {
+    const token = uuidv4();
+    const expirationDate = new Date();
+    expirationDate.setDate(expirationDate.getDate() + this.REFRESH_TOKEN_DAYS);
+
+    const refreshToken = await this.prisma.refreshToken.create({
+      data: {
+        usuarioId: user.id,
+        token,
         expiraEn: expirationDate,
       },
     });
@@ -300,5 +342,6 @@ export class AuthService {
         nombre: user.nombre,
       },
     };
+    return refreshToken;
   }
 }

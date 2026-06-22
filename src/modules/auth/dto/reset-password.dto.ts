@@ -3,6 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class ResetPasswordDto {
   @ApiProperty({ example: 'uuid-token', description: 'Token de recuperación' })
+  @ApiProperty({ example: 'uuid-token', description: 'Token de recuperación de contraseña' })
   @IsString()
   @IsUUID()
   token: string;
