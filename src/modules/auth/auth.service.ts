@@ -98,6 +98,7 @@ export class AuthService {
     };
   }
 
+  async login(dto: LoginDto) {
   async login(dto: LoginDto, ip?: string) {
     const user = await this.prisma.usuario.findUnique({
       where: { email: dto.email.toLowerCase() },
@@ -108,6 +109,7 @@ export class AuthService {
     }
 
     if (user.estado === 'PENDIENTE') {
+      throw new UnauthorizedException('La cuenta no ha sido verificada.');
       throw new UnauthorizedException('La cuenta no ha sido verificada. Revise su correo.');
     }
 
@@ -118,6 +120,10 @@ export class AuthService {
     if (user.bloqueadoHasta && new Date() < user.bloqueadoHasta) {
       const minutesLeft = Math.ceil((user.bloqueadoHasta.getTime() - Date.now()) / 60000);
       throw new UnauthorizedException(`Cuenta bloqueada. Intente de nuevo en ${minutesLeft} minutos.`);
+    }
+
+    if (!user.passwordHash) {
+      throw new UnauthorizedException('Esta cuenta no tiene contraseña. Use inicio de sesión con proveedor social.');
     }
 
     const isPasswordValid = await bcrypt.compare(dto.password, user.passwordHash);
@@ -133,6 +139,7 @@ export class AuthService {
         updateData.estado = 'BLOQUEADO';
       }
 
+      await this.prisma.usuario.update({ where: { id: user.id }, data: updateData });
       await this.prisma.usuario.update({
         where: { id: user.id },
         data: updateData,
@@ -153,6 +160,60 @@ export class AuthService {
       });
     }
 
+    return this.generateAuthTokens(user);
+  }
+
+  async loginWithOAuth(oauthUser: { email: string; nombre: string; provider: string; providerId: string }) {
+    if (!oauthUser.email) {
+      throw new BadRequestException('El proveedor OAuth no proporcionó un correo electrónico');
+    }
+
+    const existingUser = await this.prisma.usuario.findUnique({
+      where: { email: oauthUser.email.toLowerCase() },
+      include: { proveedoresSociales: true },
+    });
+
+    if (existingUser) {
+      const alreadyLinked = existingUser.proveedoresSociales.some(
+        (p) => p.provider === oauthUser.provider && p.providerId === oauthUser.providerId,
+      );
+
+      if (!alreadyLinked) {
+        await this.prisma.proveedorSocial.create({
+          data: {
+            usuarioId: existingUser.id,
+            provider: oauthUser.provider,
+            providerId: oauthUser.providerId,
+          },
+        });
+      }
+
+      if (existingUser.intentosFallidos > 0) {
+        await this.prisma.usuario.update({
+          where: { id: existingUser.id },
+          data: { intentosFallidos: 0, bloqueadoHasta: null, estado: 'ACTIVO' },
+        });
+      }
+
+      return this.generateAuthTokens(existingUser);
+    }
+
+    const newUser = await this.prisma.usuario.create({
+      data: {
+        email: oauthUser.email.toLowerCase(),
+        nombre: oauthUser.nombre || oauthUser.email,
+        passwordHash: null,
+        estado: 'ACTIVO',
+        proveedoresSociales: {
+          create: {
+            provider: oauthUser.provider,
+            providerId: oauthUser.providerId,
+          },
+        },
+      },
+    });
+
+    return this.generateAuthTokens(newUser);
     const accessToken = this.generateAccessToken(user);
     const refreshToken = await this.generateRefreshToken(user);
 
@@ -182,6 +243,7 @@ export class AuthService {
     expirationDate.setHours(expirationDate.getHours() + this.RESET_TOKEN_HOURS);
 
     await this.prisma.passwordResetToken.create({
+      data: { usuarioId: user.id, token: resetToken, expiraEn: expirationDate },
       data: {
         usuarioId: user.id,
         token: resetToken,
@@ -233,6 +295,21 @@ export class AuthService {
     ]);
 
     return {
+      message: 'Contraseña restablecida exitosamente.',
+    };
+  }
+
+  private async generateAuthTokens(user: any) {
+    const accessToken = this.jwtService.sign({ sub: user.id, email: user.email });
+
+    const refreshTokenValue = uuidv4();
+    const expirationDate = new Date();
+    expirationDate.setDate(expirationDate.getDate() + this.REFRESH_TOKEN_DAYS);
+
+    await this.prisma.refreshToken.create({
+      data: {
+        usuarioId: user.id,
+        token: refreshTokenValue,
       message: 'Contraseña restablecida exitosamente. Puede iniciar sesión con su nueva contraseña.',
     };
   }
@@ -255,6 +332,16 @@ export class AuthService {
       },
     });
 
+    return {
+      accessToken,
+      refreshToken: refreshTokenValue,
+      expiresIn: this.configService.get<string>('JWT_EXPIRATION'),
+      user: {
+        id: user.id,
+        email: user.email,
+        nombre: user.nombre,
+      },
+    };
     return refreshToken;
   }
 }

@@ -17,7 +17,7 @@ enum UserStatus {
 model Usuario {
   id           String     @id @default(uuid()) @map("id")
   email        String     @unique @map("email")
-  passwordHash String     @map("password_hash")
+  passwordHash String?    @map("password_hash")
   nombre       String?    @map("nombre")
   estado       UserStatus @default(PENDIENTE) @map("estado")
 
@@ -32,6 +32,10 @@ model Usuario {
   createdBy String?  @map("created_by")
   updatedBy String?  @map("updated_by")
 
+  verificaciones       VerificacionCuenta[]
+  refreshTokens        RefreshToken[]
+  passwordResetTokens  PasswordResetToken[]
+  proveedoresSociales  ProveedorSocial[]
   verificaciones    VerificacionCuenta[]
   refreshTokens     RefreshToken[]
   passwordResetTokens PasswordResetToken[]
@@ -80,4 +84,18 @@ model PasswordResetToken {
   usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
   @@map("PasswordResetToken")
+}
+
+model ProveedorSocial {
+  id         String   @id @default(uuid()) @map("id")
+  usuarioId  String   @map("usuario_id")
+  provider   String   @map("provider")
+  providerId String   @map("provider_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerId])
+  @@map("ProveedorSocial")
 }
