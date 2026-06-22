@@ -32,13 +32,11 @@ model Usuario {
   createdBy String?  @map("created_by")
   updatedBy String?  @map("updated_by")
 
-  verificaciones       VerificacionCuenta[]
-  refreshTokens        RefreshToken[]
-  passwordResetTokens  PasswordResetToken[]
-  proveedoresSociales  ProveedorSocial[]
-  verificaciones    VerificacionCuenta[]
-  refreshTokens     RefreshToken[]
+  verificaciones      VerificacionCuenta[]
+  refreshTokens       RefreshToken[]
   passwordResetTokens PasswordResetToken[]
+  proveedoresSociales ProveedorSocial[]
+  roles               UsuarioRol[]
 
   @@map("Usuario")
 }
@@ -98,4 +96,61 @@ model ProveedorSocial {
 
   @@unique([provider, providerId])
   @@map("ProveedorSocial")
+}
+
+model Rol {
+  id          String   @id @default(uuid()) @map("id")
+  nombre      String   @unique @map("nombre")
+  descripcion String?  @map("descripcion")
+  esGlobal    Boolean  @default(true) @map("es_global")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
+
+  usuarios  UsuarioRol[]
+  permisos  RolPermiso[]
+
+  @@map("Rol")
+}
+
+model Permiso {
+  id          String   @id @default(uuid()) @map("id")
+  nombre      String   @unique @map("nombre")
+  descripcion String?  @map("descripcion")
+  modulo      String   @map("modulo")
+  accion      String   @map("accion")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  roles RolPermiso[]
+
+  @@map("Permiso")
+}
+
+model RolPermiso {
+  rolId     String @map("rol_id")
+  permisoId String @map("permiso_id")
+
+  rol     Rol     @relation(fields: [rolId], references: [id], onDelete: Cascade)
+  permiso Permiso @relation(fields: [permisoId], references: [id], onDelete: Cascade)
+
+  @@id([rolId, permisoId])
+  @@map("RolPermiso")
+}
+
+model UsuarioRol {
+  id        String  @id @default(uuid()) @map("id")
+  usuarioId String  @map("usuario_id")
+  rolId     String  @map("rol_id")
+  companyId String? @map("company_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  rol     Rol     @relation(fields: [rolId], references: [id], onDelete: Cascade)
+
+  @@unique([usuarioId, rolId, companyId])
+  @@map("UsuarioRol")
 }

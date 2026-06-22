@@ -98,7 +98,6 @@ export class AuthService {
     };
   }
 
-  async login(dto: LoginDto) {
   async login(dto: LoginDto, ip?: string) {
     const user = await this.prisma.usuario.findUnique({
       where: { email: dto.email.toLowerCase() },
@@ -109,7 +108,6 @@ export class AuthService {
     }
 
     if (user.estado === 'PENDIENTE') {
-      throw new UnauthorizedException('La cuenta no ha sido verificada.');
       throw new UnauthorizedException('La cuenta no ha sido verificada. Revise su correo.');
     }
 
@@ -139,7 +137,6 @@ export class AuthService {
         updateData.estado = 'BLOQUEADO';
       }
 
-      await this.prisma.usuario.update({ where: { id: user.id }, data: updateData });
       await this.prisma.usuario.update({
         where: { id: user.id },
         data: updateData,
@@ -214,19 +211,6 @@ export class AuthService {
     });
 
     return this.generateAuthTokens(newUser);
-    const accessToken = this.generateAccessToken(user);
-    const refreshToken = await this.generateRefreshToken(user);
-
-    return {
-      accessToken,
-      refreshToken: refreshToken.token,
-      expiresIn: this.configService.get<string>('JWT_EXPIRATION'),
-      user: {
-        id: user.id,
-        email: user.email,
-        nombre: user.nombre,
-      },
-    };
   }
 
   async forgotPassword(dto: ForgotPasswordDto) {
@@ -243,7 +227,6 @@ export class AuthService {
     expirationDate.setHours(expirationDate.getHours() + this.RESET_TOKEN_HOURS);
 
     await this.prisma.passwordResetToken.create({
-      data: { usuarioId: user.id, token: resetToken, expiraEn: expirationDate },
       data: {
         usuarioId: user.id,
         token: resetToken,
@@ -300,22 +283,51 @@ export class AuthService {
   }
 
   private async generateAuthTokens(user: any) {
-    const accessToken = this.jwtService.sign({ sub: user.id, email: user.email });
+    const rolesData = await this.prisma.usuario.findUnique({
+      where: { id: user.id },
+      include: {
+        roles: {
+          include: {
+            rol: {
+              include: {
+                permisos: {
+                  include: { permiso: true },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
 
-    const refreshTokenValue = uuidv4();
-    const expirationDate = new Date();
-    expirationDate.setDate(expirationDate.getDate() + this.REFRESH_TOKEN_DAYS);
+    const roles = rolesData?.roles.map((ur: any) => ur.rol.nombre) || [];
+    const permisosSet = new Set<string>();
+    for (const ur of rolesData?.roles || []) {
+      for (const rp of ur.rol.permisos) {
+        permisosSet.add(rp.permiso.nombre);
+      }
+    }
+    const permisos = Array.from(permisosSet);
 
-    await this.prisma.refreshToken.create({
-      data: {
-        usuarioId: user.id,
-        token: refreshTokenValue,
-      message: 'Contraseña restablecida exitosamente. Puede iniciar sesión con su nueva contraseña.',
+    const accessToken = this.generateAccessToken(user, roles, permisos);
+    const refreshToken = await this.generateRefreshToken(user);
+
+    return {
+      accessToken,
+      refreshToken: refreshToken.token,
+      expiresIn: this.configService.get<string>('JWT_EXPIRATION'),
+      user: {
+        id: user.id,
+        email: user.email,
+        nombre: user.nombre,
+        roles,
+        permisos,
+      },
     };
   }
 
-  private generateAccessToken(user: any): string {
-    const payload = { sub: user.id, email: user.email };
+  private generateAccessToken(user: any, roles: string[] = [], permisos: string[] = []): string {
+    const payload = { sub: user.id, email: user.email, roles, permisos };
     return this.jwtService.sign(payload);
   }
 
@@ -324,24 +336,12 @@ export class AuthService {
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() + this.REFRESH_TOKEN_DAYS);
 
-    const refreshToken = await this.prisma.refreshToken.create({
+    return this.prisma.refreshToken.create({
       data: {
         usuarioId: user.id,
         token,
         expiraEn: expirationDate,
       },
     });
-
-    return {
-      accessToken,
-      refreshToken: refreshTokenValue,
-      expiresIn: this.configService.get<string>('JWT_EXPIRATION'),
-      user: {
-        id: user.id,
-        email: user.email,
-        nombre: user.nombre,
-      },
-    };
-    return refreshToken;
   }
 }

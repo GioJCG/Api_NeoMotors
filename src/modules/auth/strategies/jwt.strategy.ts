@@ -27,10 +27,31 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   async validate(payload: JwtPayload) {
     const user = await this.prisma.usuario.findUnique({
       where: { id: payload.sub },
+      include: {
+        roles: {
+          include: {
+            rol: {
+              include: {
+                permisos: {
+                  include: { permiso: true },
+                },
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!user || user.estado !== 'ACTIVO') {
       throw new UnauthorizedException('Usuario no encontrado o inactivo');
+    }
+
+    const roles = user.roles.map((ur) => ur.rol.nombre);
+    const permisosSet = new Set<string>();
+    for (const ur of user.roles) {
+      for (const rp of ur.rol.permisos) {
+        permisosSet.add(rp.permiso.nombre);
+      }
     }
 
     return {
@@ -38,6 +59,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       email: user.email,
       nombre: user.nombre,
       estado: user.estado,
+      companyId: user.companyId,
+      roles,
+      permisos: Array.from(permisosSet),
     };
   }
 }
