@@ -1,8 +1,6 @@
 import { Controller, Post, Body, Get, Req, Res, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
-import { Controller, Post, Body, Req, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { VerifyDto } from './dto/verify.dto';
@@ -11,7 +9,6 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { IpThrottlerGuard } from '../../common/guards/throttler.guard';
 import type { Request, Response } from 'express';
-import type { Request } from 'express';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -19,8 +16,6 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
-  @ApiOperation({ summary: 'Registro de usuario local' })
-  @ApiResponse({ status: 201, description: 'Usuario registrado.' })
   @ApiOperation({ summary: 'Registro de usuario local', description: 'Crea una cuenta de usuario en estado PENDIENTE y envía un token de verificación.' })
   @ApiBody({ type: RegisterDto })
   @ApiResponse({ status: 201, description: 'Usuario registrado exitosamente.' })
@@ -30,8 +25,6 @@ export class AuthController {
   }
 
   @Post('verify')
-  @ApiOperation({ summary: 'Verificación de cuenta' })
-  @ApiResponse({ status: 201, description: 'Cuenta verificada.' })
   @ApiOperation({ summary: 'Verificación de cuenta', description: 'Valida el token de verificación y cambia el estado del usuario a ACTIVO.' })
   @ApiBody({ type: VerifyDto })
   @ApiResponse({ status: 201, description: 'Cuenta verificada exitosamente.' })
@@ -43,10 +36,6 @@ export class AuthController {
 
   @Post('login')
   @UseGuards(IpThrottlerGuard)
-  @ApiOperation({ summary: 'Inicio de sesión' })
-  @ApiResponse({ status: 201, description: 'Login exitoso.' })
-  async login(@Body() dto: LoginDto) {
-    return this.authService.login(dto);
   @ApiOperation({ summary: 'Inicio de sesión', description: 'Autentica al usuario y retorna JWT + Refresh Token.' })
   @ApiBody({ type: LoginDto })
   @ApiResponse({ status: 201, description: 'Login exitoso. Retorna accessToken y refreshToken.' })
@@ -57,8 +46,6 @@ export class AuthController {
 
   @Post('forgot-password')
   @UseGuards(IpThrottlerGuard)
-  @ApiOperation({ summary: 'Solicitar recuperación de contraseña' })
-  @ApiResponse({ status: 201, description: 'Token generado.' })
   @ApiOperation({ summary: 'Solicitar recuperación de contraseña', description: 'Envía un token de recuperación al correo del usuario.' })
   @ApiBody({ type: ForgotPasswordDto })
   @ApiResponse({ status: 201, description: 'Token de recuperación generado.' })
@@ -67,8 +54,11 @@ export class AuthController {
   }
 
   @Post('reset-password')
-  @ApiOperation({ summary: 'Restablecer contraseña' })
-  @ApiResponse({ status: 201, description: 'Contraseña restablecida.' })
+  @ApiOperation({ summary: 'Restablecer contraseña', description: 'Cambia la contraseña usando un token de recuperación válido. El token se invalida tras su uso.' })
+  @ApiBody({ type: ResetPasswordDto })
+  @ApiResponse({ status: 201, description: 'Contraseña restablecida exitosamente.' })
+  @ApiResponse({ status: 404, description: 'Token no encontrado.' })
+  @ApiResponse({ status: 400, description: 'Token expirado o ya utilizado.' })
   async resetPassword(@Body() dto: ResetPasswordDto) {
     return this.authService.resetPassword(dto);
   }
@@ -127,13 +117,5 @@ export class AuthController {
 
   private getFrontendUrl(): string {
     return this.authService['configService'].get<string>('FRONTEND_URL') || 'http://localhost:4200';
-  }
-  @ApiOperation({ summary: 'Restablecer contraseña', description: 'Cambia la contraseña usando un token de recuperación válido. El token se invalida tras su uso.' })
-  @ApiBody({ type: ResetPasswordDto })
-  @ApiResponse({ status: 201, description: 'Contraseña restablecida exitosamente.' })
-  @ApiResponse({ status: 404, description: 'Token no encontrado.' })
-  @ApiResponse({ status: 400, description: 'Token expirado o ya utilizado.' })
-  async resetPassword(@Body() dto: ResetPasswordDto) {
-    return this.authService.resetPassword(dto);
   }
 }
