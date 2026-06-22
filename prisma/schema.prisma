@@ -38,6 +38,8 @@ model Usuario {
   proveedoresSociales ProveedorSocial[]
   empresa             Empresa?      @relation(fields: [companyId], references: [id])
   roles               UsuarioRol[]
+  empresasAsignadas   UsuarioEmpresa[]
+  sucursalesAsignadas UsuarioSucursal[]
 
   @@map("Usuario")
 }
@@ -180,8 +182,9 @@ model Empresa {
   createdBy String?  @map("created_by")
   updatedBy String?  @map("updated_by")
 
-  usuarios   Usuario[]
-  sucursales Sucursal[]
+  usuarios        Usuario[]
+  sucursales      Sucursal[]
+  usuariosAsignados UsuarioEmpresa[]
 
   @@map("Empresa")
 }
@@ -202,9 +205,40 @@ model Sucursal {
   createdBy String?  @map("created_by")
   updatedBy String?  @map("updated_by")
 
-  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  empresa            Empresa           @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  usuariosAsignados  UsuarioSucursal[]
 
   @@map("Sucursal")
+}
+
+model UsuarioEmpresa {
+  id        String   @id @default(uuid()) @map("id")
+  usuarioId String   @map("usuario_id")
+  empresaId String   @map("empresa_id")
+  activa    Boolean  @default(false) @map("activa")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  @@unique([usuarioId, empresaId])
+  @@map("UsuarioEmpresa")
+}
+
+model UsuarioSucursal {
+  id         String   @id @default(uuid()) @map("id")
+  usuarioId  String   @map("usuario_id")
+  sucursalId String   @map("sucursal_id")
+  activa     Boolean  @default(false) @map("activa")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  usuario  Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  sucursal Sucursal @relation(fields: [sucursalId], references: [id], onDelete: Cascade)
+
+  @@unique([usuarioId, sucursalId])
+  @@map("UsuarioSucursal")
 }
 
 model Auditoria {
