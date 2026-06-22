@@ -21,7 +21,7 @@ model Usuario {
   nombre       String?    @map("nombre")
   estado       UserStatus @default(PENDIENTE) @map("estado")
 
-  intentosFallidos Int      @default(0) @map("intentos_fallidos")
+  intentosFallidos Int       @default(0) @map("intentos_fallidos")
   bloqueadoHasta   DateTime? @map("bloqueado_hasta")
 
   companyId String? @map("company_id")
@@ -36,7 +36,7 @@ model Usuario {
   refreshTokens       RefreshToken[]
   passwordResetTokens PasswordResetToken[]
   proveedoresSociales ProveedorSocial[]
-  empresa             Empresa?      @relation(fields: [companyId], references: [id])
+  empresa             Empresa?             @relation(fields: [companyId], references: [id])
   roles               UsuarioRol[]
   empresasAsignadas   UsuarioEmpresa[]
   sucursalesAsignadas UsuarioSucursal[]
@@ -88,10 +88,10 @@ model PasswordResetToken {
 }
 
 model ProveedorSocial {
-  id         String   @id @default(uuid()) @map("id")
-  usuarioId  String   @map("usuario_id")
-  provider   String   @map("provider")
-  providerId String   @map("provider_id")
+  id         String @id @default(uuid()) @map("id")
+  usuarioId  String @map("usuario_id")
+  provider   String @map("provider")
+  providerId String @map("provider_id")
 
   createdAt DateTime @default(now()) @map("created_at")
 
@@ -102,28 +102,28 @@ model ProveedorSocial {
 }
 
 model Rol {
-  id          String   @id @default(uuid()) @map("id")
-  nombre      String   @unique @map("nombre")
-  descripcion String?  @map("descripcion")
-  esGlobal    Boolean  @default(true) @map("es_global")
+  id          String  @id @default(uuid()) @map("id")
+  nombre      String  @unique @map("nombre")
+  descripcion String? @map("descripcion")
+  esGlobal    Boolean @default(true) @map("es_global")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
   createdBy String?  @map("created_by")
   updatedBy String?  @map("updated_by")
 
-  usuarios  UsuarioRol[]
-  permisos  RolPermiso[]
+  usuarios UsuarioRol[]
+  permisos RolPermiso[]
 
   @@map("Rol")
 }
 
 model Permiso {
-  id          String   @id @default(uuid()) @map("id")
-  nombre      String   @unique @map("nombre")
-  descripcion String?  @map("descripcion")
-  modulo      String   @map("modulo")
-  accion      String   @map("accion")
+  id          String  @id @default(uuid()) @map("id")
+  nombre      String  @unique @map("nombre")
+  descripcion String? @map("descripcion")
+  modulo      String  @map("modulo")
+  accion      String  @map("accion")
 
   createdAt DateTime @default(now()) @map("created_at")
 
@@ -182,40 +182,40 @@ model Empresa {
   createdBy String?  @map("created_by")
   updatedBy String?  @map("updated_by")
 
-  usuarios        Usuario[]
-  sucursales      Sucursal[]
+  usuarios          Usuario[]
+  sucursales        Sucursal[]
   usuariosAsignados UsuarioEmpresa[]
 
   @@map("Empresa")
 }
 
 model Sucursal {
-  id         String  @id @default(uuid()) @map("id")
-  empresaId  String  @map("empresa_id")
-  nombre     String  @map("nombre")
-  direccion  String? @map("direccion")
-  telefono   String? @map("telefono")
-  esMatriz   Boolean @default(false) @map("es_matriz")
-  latitud    Float?  @map("latitud")
-  longitud   Float?  @map("longitud")
-  estado     String  @default("ACTIVA") @map("estado")
+  id        String  @id @default(uuid()) @map("id")
+  empresaId String  @map("empresa_id")
+  nombre    String  @map("nombre")
+  direccion String? @map("direccion")
+  telefono  String? @map("telefono")
+  esMatriz  Boolean @default(false) @map("es_matriz")
+  latitud   Float?  @map("latitud")
+  longitud  Float?  @map("longitud")
+  estado    String  @default("ACTIVA") @map("estado")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
   createdBy String?  @map("created_by")
   updatedBy String?  @map("updated_by")
 
-  empresa            Empresa           @relation(fields: [empresaId], references: [id], onDelete: Cascade)
-  usuariosAsignados  UsuarioSucursal[]
+  empresa           Empresa           @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  usuariosAsignados UsuarioSucursal[]
 
   @@map("Sucursal")
 }
 
 model UsuarioEmpresa {
-  id        String   @id @default(uuid()) @map("id")
-  usuarioId String   @map("usuario_id")
-  empresaId String   @map("empresa_id")
-  activa    Boolean  @default(false) @map("activa")
+  id        String  @id @default(uuid()) @map("id")
+  usuarioId String  @map("usuario_id")
+  empresaId String  @map("empresa_id")
+  activa    Boolean @default(false) @map("activa")
 
   createdAt DateTime @default(now()) @map("created_at")
 
@@ -227,10 +227,10 @@ model UsuarioEmpresa {
 }
 
 model UsuarioSucursal {
-  id         String   @id @default(uuid()) @map("id")
-  usuarioId  String   @map("usuario_id")
-  sucursalId String   @map("sucursal_id")
-  activa     Boolean  @default(false) @map("activa")
+  id         String  @id @default(uuid()) @map("id")
+  usuarioId  String  @map("usuario_id")
+  sucursalId String  @map("sucursal_id")
+  activa     Boolean @default(false) @map("activa")
 
   createdAt DateTime @default(now()) @map("created_at")
 
@@ -242,16 +242,130 @@ model UsuarioSucursal {
 }
 
 model Auditoria {
-  id        String   @id @default(uuid()) @map("id")
-  usuarioId String?  @map("usuario_id")
-  accion    String   @map("accion")
-  entidad   String   @map("entidad")
-  entidadId String?  @map("entidad_id")
-  payload   Json?    @map("payload")
-  contexto  String?  @map("contexto")
-  ip        String?  @map("ip")
+  id        String  @id @default(uuid()) @map("id")
+  usuarioId String? @map("usuario_id")
+  accion    String  @map("accion")
+  entidad   String  @map("entidad")
+  entidadId String? @map("entidad_id")
+  payload   Json?   @map("payload")
+  contexto  String? @map("contexto")
+  ip        String? @map("ip")
 
   createdAt DateTime @default(now()) @map("created_at")
 
   @@map("Auditoria")
+}
+
+model SatPais {
+  id     String @id @default(uuid()) @map("id")
+  codigo String @unique @map("codigo")
+  nombre String @map("nombre")
+
+  estados SatEstado[]
+
+  @@index([nombre])
+  @@map("SatPais")
+}
+
+model SatEstado {
+  id     String @id @default(uuid()) @map("id")
+  codigo String @map("codigo")
+  nombre String @map("nombre")
+  paisId String @map("pais_id")
+
+  pais            SatPais           @relation(fields: [paisId], references: [id])
+  municipios      SatMunicipio[]
+  codigosPostales SatCodigoPostal[]
+
+  @@index([paisId])
+  @@index([nombre])
+  @@map("SatEstado")
+}
+
+model SatMunicipio {
+  id       String @id @default(uuid()) @map("id")
+  codigo   String @map("codigo")
+  nombre   String @map("nombre")
+  estadoId String @map("estado_id")
+
+  estado          SatEstado         @relation(fields: [estadoId], references: [id])
+  codigosPostales SatCodigoPostal[]
+
+  @@index([estadoId])
+  @@index([nombre])
+  @@map("SatMunicipio")
+}
+
+model SatCodigoPostal {
+  id          String  @id @default(uuid()) @map("id")
+  codigo      String  @map("codigo")
+  estadoId    String  @map("estado_id")
+  municipioId String? @map("municipio_id")
+
+  estado    SatEstado     @relation(fields: [estadoId], references: [id])
+  municipio SatMunicipio? @relation(fields: [municipioId], references: [id])
+  colonias  SatColonia[]
+
+  @@index([codigo])
+  @@index([estadoId])
+  @@index([municipioId])
+  @@map("SatCodigoPostal")
+}
+
+model SatColonia {
+  id             String @id @default(uuid()) @map("id")
+  codigo         String @map("codigo")
+  nombre         String @map("nombre")
+  codigoPostalId String @map("codigo_postal_id")
+
+  codigoPostal SatCodigoPostal @relation(fields: [codigoPostalId], references: [id])
+
+  @@index([codigoPostalId])
+  @@index([nombre])
+  @@map("SatColonia")
+}
+
+model SatProductoServicio {
+  id          String  @id @default(uuid()) @map("id")
+  codigo      String  @unique @map("codigo")
+  descripcion String  @map("descripcion")
+  nivel       String? @map("nivel")
+  incluyeIva  Boolean @default(false) @map("incluye_iva")
+  incluyeIeps Boolean @default(false) @map("incluye_ieps")
+
+  @@index([codigo])
+  @@index([descripcion])
+  @@map("SatProductoServicio")
+}
+
+model SatUnidadMedida {
+  id      String  @id @default(uuid()) @map("id")
+  codigo  String  @unique @map("codigo")
+  nombre  String  @map("nombre")
+  simbolo String? @map("simbolo")
+
+  @@index([nombre])
+  @@map("SatUnidadMedida")
+}
+
+model SatRegimenFiscal {
+  id     String @id @default(uuid()) @map("id")
+  codigo String @unique @map("codigo")
+  nombre String @map("nombre")
+  tipo   String @map("tipo")
+
+  @@index([nombre])
+  @@index([tipo])
+  @@map("SatRegimenFiscal")
+}
+
+model SatUsoCfdi {
+  id     String @id @default(uuid()) @map("id")
+  codigo String @unique @map("codigo")
+  nombre String @map("nombre")
+  tipo   String @map("tipo")
+
+  @@index([nombre])
+  @@index([tipo])
+  @@map("SatUsoCfdi")
 }
