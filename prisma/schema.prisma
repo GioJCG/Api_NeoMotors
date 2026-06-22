@@ -17,9 +17,12 @@ enum UserStatus {
 model Usuario {
   id           String     @id @default(uuid()) @map("id")
   email        String     @unique @map("email")
-  passwordHash String     @map("password_hash")
+  passwordHash String?    @map("password_hash")
   nombre       String?    @map("nombre")
   estado       UserStatus @default(PENDIENTE) @map("estado")
+
+  intentosFallidos Int      @default(0) @map("intentos_fallidos")
+  bloqueadoHasta   DateTime? @map("bloqueado_hasta")
 
   companyId String? @map("company_id")
   branchId  String? @map("branch_id")
@@ -29,7 +32,10 @@ model Usuario {
   createdBy String?  @map("created_by")
   updatedBy String?  @map("updated_by")
 
-  verificaciones VerificacionCuenta[]
+  verificaciones       VerificacionCuenta[]
+  refreshTokens        RefreshToken[]
+  passwordResetTokens  PasswordResetToken[]
+  proveedoresSociales  ProveedorSocial[]
 
   @@map("Usuario")
 }
@@ -46,4 +52,47 @@ model VerificacionCuenta {
   usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
   @@map("VerificacionCuenta")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid()) @map("id")
+  usuarioId String   @map("usuario_id")
+  token     String   @unique @map("token")
+  expiraEn  DateTime @map("expira_en")
+  usado     Boolean  @default(false) @map("usado")
+  revocado  Boolean  @default(false) @map("revocado")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@map("RefreshToken")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid()) @map("id")
+  usuarioId String   @map("usuario_id")
+  token     String   @unique @map("token")
+  expiraEn  DateTime @map("expira_en")
+  usado     Boolean  @default(false) @map("usado")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@map("PasswordResetToken")
+}
+
+model ProveedorSocial {
+  id         String   @id @default(uuid()) @map("id")
+  usuarioId  String   @map("usuario_id")
+  provider   String   @map("provider")
+  providerId String   @map("provider_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerId])
+  @@map("ProveedorSocial")
 }
