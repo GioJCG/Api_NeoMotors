@@ -124,6 +124,20 @@ async function main() {
     console.log(`Rol "${rolDef.nombre}": ${permisosAsignar.length} permisos asignados`);
   }
 
+  const empresaDefault = await prisma.empresa.upsert({
+    where: { rfc: 'NEOM220101ABC' },
+    create: {
+      nombre: 'neoMotors Default',
+      rfc: 'NEOM220101ABC',
+      razonSocial: 'neoMotors SaaS S.A. de C.V.',
+      codigoPostalFiscal: '45019',
+      regimenFiscal: '601',
+      createdBy: 'seed',
+    },
+    update: {},
+  });
+  console.log(`Empresa default: ${empresaDefault.id}`);
+
   console.log('Seed RBAC completado exitosamente.');
 }
 
