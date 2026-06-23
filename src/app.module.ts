@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { RbacModule } from './modules/rbac/rbac.module';
@@ -11,11 +12,13 @@ import { ContextModule } from './modules/context/context.module';
 import { SatCatalogsModule } from './modules/sat-catalogs/sat-catalogs.module';
 import { ClientesModule } from './modules/clientes/clientes.module';
 import { VehiculosModule } from './modules/vehiculos/vehiculos.module';
+import { CitasModule } from './modules/citas/citas.module';
 import { RolesGuard } from './modules/rbac/guards/roles.guard';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    EventEmitterModule.forRoot(),
     PrismaModule,
     AuthModule,
     RbacModule,
@@ -26,6 +29,7 @@ import { RolesGuard } from './modules/rbac/guards/roles.guard';
     SatCatalogsModule,
     ClientesModule,
     VehiculosModule,
+    CitasModule,
   ],
   providers: [
     {

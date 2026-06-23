@@ -187,6 +187,7 @@ model Empresa {
   usuariosAsignados UsuarioEmpresa[]
   clientes        Cliente[]
   vehiculos       Vehiculo[]
+  citas           Cita[]
 
   @@map("Empresa")
 }
@@ -209,6 +210,7 @@ model Sucursal {
 
   empresa           Empresa           @relation(fields: [empresaId], references: [id], onDelete: Cascade)
   usuariosAsignados UsuarioSucursal[]
+  citas             Cita[]
 
   @@map("Sucursal")
 }
@@ -308,6 +310,7 @@ model Vehiculo {
   cliente Cliente @relation(fields: [clienteId], references: [id])
   marca   Marca   @relation(fields: [marcaId], references: [id])
   modelo  Modelo  @relation(fields: [modeloId], references: [id])
+  citas   Cita[]
 
   @@unique([empresaId, placa])
   @@index([empresaId])
@@ -333,6 +336,7 @@ model Cliente {
 
   empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
   vehiculos Vehiculo[]
+  citas Cita[]
 
   @@unique([empresaId, rfc])
   @@unique([empresaId, email])
@@ -453,4 +457,33 @@ model SatUsoCfdi {
   @@index([nombre])
   @@index([tipo])
   @@map("SatUsoCfdi")
+}
+
+model Cita {
+  id         String   @id @default(uuid()) @map("id")
+  empresaId  String   @map("empresa_id")
+  sucursalId String?  @map("sucursal_id")
+  clienteId  String   @map("cliente_id")
+  vehiculoId String   @map("vehiculo_id")
+  fecha      DateTime @map("fecha")
+  hora       String   @map("hora") // HH:mm
+  estado     String   @default("PROGRAMADA") @map("estado") // PROGRAMADA, CONFIRMADA, CANCELADA, COMPLETADA
+  notas      String?  @map("notas")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
+
+  empresa  Empresa   @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  sucursal Sucursal? @relation(fields: [sucursalId], references: [id])
+  cliente  Cliente   @relation(fields: [clienteId], references: [id])
+  vehiculo Vehiculo  @relation(fields: [vehiculoId], references: [id])
+
+  @@index([empresaId])
+  @@index([sucursalId])
+  @@index([clienteId])
+  @@index([vehiculoId])
+  @@index([fecha])
+  @@map("Cita")
 }
