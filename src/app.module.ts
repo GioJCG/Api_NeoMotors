@@ -24,6 +24,7 @@ import { NotificacionesModule } from './modules/notificaciones/notificaciones.mo
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { FiscalModule } from './modules/fiscal/fiscal.module';
 import { BillingModule } from './modules/billing/billing.module';
+import { SuperadminModule } from './modules/superadmin/superadmin.module';
 import { RolesGuard } from './modules/rbac/guards/roles.guard';
 
 @Module({
@@ -52,6 +53,7 @@ import { RolesGuard } from './modules/rbac/guards/roles.guard';
     DashboardModule,
     FiscalModule,
     BillingModule,
+    SuperadminModule,
   ],
   providers: [
     {
