@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   BadRequestException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditoriaService } from '../auditoria/auditoria.service';
 import {
@@ -18,6 +19,7 @@ export class CashDeskService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditoria: AuditoriaService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async open(
@@ -169,6 +171,14 @@ export class CashDeskService {
         usuarioId: user.id, accion: 'REGISTRAR_PAGO', entidad: 'Pago', entidadId: pago.id,
         payload: { ordenTrabajoId: dto.ordenTrabajoId, monto, metodoPago: dto.metodoPago },
         contexto: `Sucursal: ${sucursalId}`, ip,
+      });
+
+      this.eventEmitter.emit('pago.registrado', {
+        pagoId: pago.id,
+        empresaId,
+        sucursalId,
+        monto,
+        folioOrden: orden.folio,
       });
 
       return pago;

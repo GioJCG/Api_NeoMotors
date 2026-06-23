@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditoriaService } from '../auditoria/auditoria.service';
 import { CreateReceptionDto } from './dto/create-reception.dto';
@@ -15,6 +16,7 @@ export class WorkOrdersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditoria: AuditoriaService,
+    private readonly eventEmitter: EventEmitter2,
   ) {
     if (!fs.existsSync(this.uploadDir)) {
       fs.mkdirSync(this.uploadDir, { recursive: true });
@@ -336,6 +338,15 @@ export class WorkOrdersService {
       contexto: `Empresa: ${orden.empresaId}`,
       ip,
     });
+
+    if (dto.estado === 'TERMINADO') {
+      this.eventEmitter.emit('orden.terminada', {
+        ordenId: id,
+        empresaId: orden.empresaId,
+        sucursalId: orden.sucursalId,
+        folio: orden.folio,
+      });
+    }
 
     return updated;
   }
