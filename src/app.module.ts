@@ -19,6 +19,7 @@ import { ProveedoresModule } from './modules/proveedores/proveedores.module';
 import { OrdenesCompraModule } from './modules/ordenes-compra/ordenes-compra.module';
 import { RefaccionesModule } from './modules/refacciones/refacciones.module';
 import { InventariosModule } from './modules/inventarios/inventarios.module';
+import { CashDeskModule } from './modules/cash-desk/cash-desk.module';
 import { RolesGuard } from './modules/rbac/guards/roles.guard';
 
 @Module({
@@ -42,6 +43,7 @@ import { RolesGuard } from './modules/rbac/guards/roles.guard';
     OrdenesCompraModule,
     RefaccionesModule,
     InventariosModule,
+    CashDeskModule,
   ],
   providers: [
     {
