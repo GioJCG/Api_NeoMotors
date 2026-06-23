@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Put,
   Param,
   Body,
   Req,
@@ -12,6 +13,7 @@ import { WorkOrdersService } from './work-orders.service';
 import { CreateReceptionDto } from './dto/create-reception.dto';
 import { CreateDiagnosticoDto } from './dto/create-diagnostico.dto';
 import { TrackTimeDto } from './dto/track-time.dto';
+import { UpdateWorkOrderStatusDto } from './dto/update-status.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { Roles } from '../rbac/decorators/roles.decorator';
 import type { Request } from 'express';
@@ -70,5 +72,12 @@ export class WorkOrdersController {
   @ApiOperation({ summary: 'Obtener registros de tiempo' })
   getTimeRecords(@Param('id') id: string, @Req() req: Request) {
     return this.workOrdersService.getTimeRecords(id, req.user as any);
+  }
+
+  @Put(':id/status')
+  @Roles('SuperUsuario', 'AdministradorEmpresa', 'SupervisorSucursal')
+  @ApiOperation({ summary: 'Actualizar estado de la orden de trabajo' })
+  updateStatus(@Param('id') id: string, @Body() dto: UpdateWorkOrderStatusDto, @Req() req: Request) {
+    return this.workOrdersService.updateStatus(id, dto, req.user as any, req.ip);
   }
 }
