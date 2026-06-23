@@ -204,6 +204,7 @@ model Empresa {
   cajas           Caja[]
   pagos           Pago[]
   notificaciones  NotificacionTaller[]
+  certificadosFiscales CertificadoFiscal[]
 
   @@map("Empresa")
 }
@@ -949,4 +950,28 @@ model NotificacionTaller {
   @@index([leida])
   @@index([createdAt])
   @@map("NotificacionTaller")
+}
+
+model CertificadoFiscal {
+  id             String   @id @default(uuid()) @map("id")
+  empresaId      String   @unique @map("empresa_id")
+  rfc            String   @map("rfc")
+  certificadoCer String   @map("certificado_cer") // contenido base64 del .cer
+  llaveKey       String   @map("llave_key") // contenido cifrado AES-256 del .key
+  passwordHash   String   @map("password_hash") // contraseña cifrada AES-256
+  vigenciaDesde  DateTime @map("vigencia_desde")
+  vigenciaHasta  DateTime @map("vigencia_hasta")
+  activo         Boolean  @default(true) @map("activo")
+  emisorRazonSocial String? @map("emisor_razon_social")
+  serie          String?  @map("serie")
+  numeroCertificado String? @map("numero_certificado")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  updatedBy String?  @map("updated_by")
+
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  @@index([empresaId])
+  @@map("CertificadoFiscal")
 }
