@@ -42,6 +42,8 @@ model Usuario {
   sucursalesAsignadas UsuarioSucursal[]
   diagnosticos        Diagnostico[]
   tiemposTecnico      TiempoTecnico[]
+  cajasApertura       Caja[]    @relation("CajaApertura")
+  cajasCierre         Caja[]    @relation("CajaCierre")
 
   @@map("Usuario")
 }
@@ -198,6 +200,8 @@ model Empresa {
   refacciones     Refaccion[]
   inventarios     Inventario[]
   movimientosInv  MovimientoInventario[]
+  cajas           Caja[]
+  pagos           Pago[]
 
   @@map("Empresa")
 }
@@ -225,6 +229,8 @@ model Sucursal {
   ordenesTrabajo    OrdenTrabajo[]
   inventarios       Inventario[]
   movimientosInv    MovimientoInventario[]
+  cajas             Caja[]
+  pagos             Pago[]
 
   @@map("Sucursal")
 }
@@ -580,6 +586,7 @@ model OrdenTrabajo {
   diagnosticos      Diagnostico[]
   tiemposTecnico    TiempoTecnico[]
   cotizaciones      Cotizacion[]
+  pagos             Pago[]
 
   @@unique([empresaId, folio])
   @@index([empresaId])
@@ -833,4 +840,83 @@ model MovimientoInventario {
   @@index([tipo])
   @@index([createdAt])
   @@map("MovimientoInventario")
+}
+
+model Caja {
+  id               String    @id @default(uuid()) @map("id")
+  empresaId        String    @map("empresa_id")
+  sucursalId       String    @map("sucursal_id")
+  estado           String    @default("ABIERTA") @map("estado") // ABIERTA, CERRADA
+  saldoInicial     Decimal   @default(0) @map("saldo_inicial")
+  saldoActual      Decimal   @default(0) @map("saldo_actual")
+  conteoFisico     Decimal?  @map("conteo_fisico")
+  diferencia       Decimal?  @map("diferencia")
+  fechaApertura    DateTime  @default(now()) @map("fecha_apertura")
+  fechaCierre      DateTime? @map("fecha_cierre")
+  observaciones    String?   @map("observaciones")
+  operadorAperturaId String  @map("operador_apertura_id")
+  operadorCierreId String?   @map("operador_cierre_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  empresa   Empresa   @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  sucursal  Sucursal  @relation(fields: [sucursalId], references: [id], onDelete: Cascade)
+  operadorApertura Usuario @relation("CajaApertura", fields: [operadorAperturaId], references: [id])
+  operadorCierre   Usuario? @relation("CajaCierre", fields: [operadorCierreId], references: [id])
+  movimientos MovimientoCaja[]
+  pagos       Pago[]
+
+  @@index([empresaId])
+  @@index([sucursalId])
+  @@index([estado])
+  @@map("Caja")
+}
+
+model MovimientoCaja {
+  id        String   @id @default(uuid()) @map("id")
+  cajaId    String   @map("caja_id")
+  tipo      String   @map("tipo") // APERTURA, PAGO, RETIRO, INGRESO, CIERRE
+  monto     Decimal  @map("monto")
+  saldoAnterior Decimal @default(0) @map("saldo_anterior")
+  saldoNuevo    Decimal @default(0) @map("saldo_nuevo")
+  referencia String?  @map("referencia") // OrdenTrabajoID, PagoID
+  observaciones String? @map("observaciones")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  createdBy String?  @map("created_by")
+
+  caja Caja @relation(fields: [cajaId], references: [id], onDelete: Cascade)
+
+  @@index([cajaId])
+  @@index([tipo])
+  @@index([createdAt])
+  @@map("MovimientoCaja")
+}
+
+model Pago {
+  id             String   @id @default(uuid()) @map("id")
+  empresaId      String   @map("empresa_id")
+  sucursalId     String?  @map("sucursal_id")
+  cajaId         String?  @map("caja_id")
+  ordenTrabajoId String   @map("orden_trabajo_id")
+  monto          Decimal  @map("monto")
+  metodoPago     String   @default("EFECTIVO") @map("metodo_pago") // EFECTIVO, TARJETA, TRANSFERENCIA
+  referencia     String?  @map("referencia")
+  esParcial      Boolean  @default(false) @map("es_parcial")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  createdBy String?  @map("created_by")
+
+  empresa      Empresa      @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  sucursal     Sucursal?    @relation(fields: [sucursalId], references: [id])
+  caja         Caja?        @relation(fields: [cajaId], references: [id])
+  ordenTrabajo OrdenTrabajo @relation(fields: [ordenTrabajoId], references: [id])
+
+  @@index([empresaId])
+  @@index([sucursalId])
+  @@index([cajaId])
+  @@index([ordenTrabajoId])
+  @@index([createdAt])
+  @@map("Pago")
 }
