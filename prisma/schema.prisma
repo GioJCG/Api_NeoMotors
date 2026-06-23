@@ -40,6 +40,8 @@ model Usuario {
   roles               UsuarioRol[]
   empresasAsignadas   UsuarioEmpresa[]
   sucursalesAsignadas UsuarioSucursal[]
+  diagnosticos        Diagnostico[]
+  tiemposTecnico      TiempoTecnico[]
 
   @@map("Usuario")
 }
@@ -567,6 +569,8 @@ model OrdenTrabajo {
   cliente           Cliente           @relation(fields: [clienteId], references: [id])
   vehiculo          Vehiculo          @relation(fields: [vehiculoId], references: [id])
   recepcion         RecepcionVehiculo? @relation("OrdenRecepcion", fields: [recepcionId], references: [id])
+  diagnosticos      Diagnostico[]
+  tiemposTecnico    TiempoTecnico[]
 
   @@unique([empresaId, folio])
   @@index([empresaId])
@@ -576,4 +580,46 @@ model OrdenTrabajo {
   @@index([recepcionId])
   @@index([estado])
   @@map("OrdenTrabajo")
+}
+
+model Diagnostico {
+  id                String   @id @default(uuid()) @map("id")
+  ordenTrabajoId    String   @map("orden_trabajo_id")
+  tecnicoId         String   @map("tecnico_id")
+  sintomas          String?  @map("sintomas")
+  fallasEncontradas String?  @map("fallas_encontradas")
+  desgastesPiezas   String?  @map("desgastes_piezas")
+  conclusion        String?  @map("conclusion")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  createdBy String?  @map("created_by")
+
+  ordenTrabajo OrdenTrabajo @relation(fields: [ordenTrabajoId], references: [id])
+  tecnico      Usuario      @relation(fields: [tecnicoId], references: [id])
+
+  @@index([ordenTrabajoId])
+  @@index([tecnicoId])
+  @@index([createdAt])
+  @@map("Diagnostico")
+}
+
+model TiempoTecnico {
+  id             String    @id @default(uuid()) @map("id")
+  ordenTrabajoId String    @map("orden_trabajo_id")
+  tecnicoId      String    @map("tecnico_id")
+  horaInicio     DateTime  @map("hora_inicio")
+  horaFin        DateTime? @map("hora_fin")
+  estado         String    @default("ACTIVO") @map("estado") // ACTIVO, PAUSADO, COMPLETADO
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+
+  ordenTrabajo OrdenTrabajo @relation(fields: [ordenTrabajoId], references: [id])
+  tecnico      Usuario      @relation(fields: [tecnicoId], references: [id])
+
+  @@index([ordenTrabajoId])
+  @@index([tecnicoId])
+  @@index([estado])
+  @@map("TiempoTecnico")
 }
