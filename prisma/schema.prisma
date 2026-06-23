@@ -188,6 +188,8 @@ model Empresa {
   clientes        Cliente[]
   vehiculos       Vehiculo[]
   citas           Cita[]
+  recepciones     RecepcionVehiculo[]
+  ordenesTrabajo  OrdenTrabajo[]
 
   @@map("Empresa")
 }
@@ -211,6 +213,8 @@ model Sucursal {
   empresa           Empresa           @relation(fields: [empresaId], references: [id], onDelete: Cascade)
   usuariosAsignados UsuarioSucursal[]
   citas             Cita[]
+  recepciones       RecepcionVehiculo[]
+  ordenesTrabajo    OrdenTrabajo[]
 
   @@map("Sucursal")
 }
@@ -311,6 +315,8 @@ model Vehiculo {
   marca   Marca   @relation(fields: [marcaId], references: [id])
   modelo  Modelo  @relation(fields: [modeloId], references: [id])
   citas   Cita[]
+  recepciones RecepcionVehiculo[]
+  ordenesTrabajo OrdenTrabajo[]
 
   @@unique([empresaId, placa])
   @@index([empresaId])
@@ -337,6 +343,8 @@ model Cliente {
   empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
   vehiculos Vehiculo[]
   citas Cita[]
+  ordenesTrabajo OrdenTrabajo[]
+  recepciones RecepcionVehiculo[]
 
   @@unique([empresaId, rfc])
   @@unique([empresaId, email])
@@ -479,6 +487,7 @@ model Cita {
   sucursal Sucursal? @relation(fields: [sucursalId], references: [id])
   cliente  Cliente   @relation(fields: [clienteId], references: [id])
   vehiculo Vehiculo  @relation(fields: [vehiculoId], references: [id])
+  recepcionVehiculo RecepcionVehiculo? @relation("CitaRecepcion")
 
   @@index([empresaId])
   @@index([sucursalId])
@@ -486,4 +495,85 @@ model Cita {
   @@index([vehiculoId])
   @@index([fecha])
   @@map("Cita")
+}
+
+model RecepcionVehiculo {
+  id               String   @id @default(uuid()) @map("id")
+  empresaId        String   @map("empresa_id")
+  sucursalId       String?  @map("sucursal_id")
+  citaId           String?  @unique @map("cita_id")
+  clienteId        String   @map("cliente_id")
+  vehiculoId       String   @map("vehiculo_id")
+  kilometraje      Int      @map("kilometraje")
+  nivelCombustible String   @map("nivel_combustible") // 1/4, 1/2, 3/4, LLENO
+  componentesFaltantes String? @map("componentes_faltantes") // JSON string
+  daniosCarroceria String?  @map("danios_carroceria")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  createdBy String?  @map("created_by")
+
+  empresa  Empresa   @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  sucursal Sucursal? @relation(fields: [sucursalId], references: [id])
+  cita     Cita?     @relation("CitaRecepcion", fields: [citaId], references: [id])
+  cliente  Cliente   @relation(fields: [clienteId], references: [id])
+  vehiculo Vehiculo  @relation(fields: [vehiculoId], references: [id])
+  ordenes  OrdenTrabajo[] @relation("OrdenRecepcion")
+
+  fotos RecepcionFoto[]
+
+  @@index([empresaId])
+  @@index([sucursalId])
+  @@index([clienteId])
+  @@index([vehiculoId])
+  @@index([createdAt])
+  @@map("RecepcionVehiculo")
+}
+
+model RecepcionFoto {
+  id          String @id @default(uuid()) @map("id")
+  recepcionId String @map("recepcion_id")
+  url         String @map("url")
+  orden       Int    @default(0) @map("orden")
+
+  recepcion RecepcionVehiculo @relation(fields: [recepcionId], references: [id], onDelete: Cascade)
+
+  @@index([recepcionId])
+  @@map("RecepcionFoto")
+}
+
+model OrdenTrabajo {
+  id              String   @id @default(uuid()) @map("id")
+  empresaId       String   @map("empresa_id")
+  sucursalId      String?  @map("sucursal_id")
+  clienteId       String   @map("cliente_id")
+  vehiculoId      String   @map("vehiculo_id")
+  recepcionId     String?  @map("recepcion_id")
+  folio           String   @map("folio") // Folio único por empresa
+  estado          String   @default("RECIBIDO") @map("estado") // RECIBIDO, DIAGNOSTICO, PRESUPUESTADO, APROBADO, TRABAJANDO, TERMINADO, FACTURADO, ENTREGADO, CANCELADO
+  descripcion     String?  @map("descripcion")
+  diagnostico     String?  @map("diagnostico")
+  totalEstimado   Decimal? @map("total_estimado")
+  totalReal       Decimal? @map("total_real")
+  fechaInicio     DateTime? @map("fecha_inicio")
+  fechaFin        DateTime? @map("fecha_fin")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
+
+  empresa           Empresa           @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  sucursal          Sucursal?         @relation(fields: [sucursalId], references: [id])
+  cliente           Cliente           @relation(fields: [clienteId], references: [id])
+  vehiculo          Vehiculo          @relation(fields: [vehiculoId], references: [id])
+  recepcion         RecepcionVehiculo? @relation("OrdenRecepcion", fields: [recepcionId], references: [id])
+
+  @@unique([empresaId, folio])
+  @@index([empresaId])
+  @@index([sucursalId])
+  @@index([clienteId])
+  @@index([vehiculoId])
+  @@index([recepcionId])
+  @@index([estado])
+  @@map("OrdenTrabajo")
 }
