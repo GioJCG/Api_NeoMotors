@@ -7,12 +7,16 @@ import {
 import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 import { PERMISO_KEY } from '../decorators/permiso.decorator';
+import { PrismaService } from '../../../prisma/prisma.service';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
-  constructor(private readonly reflector: Reflector) {}
+  constructor(
+    private readonly reflector: Reflector,
+    private readonly prisma: PrismaService,
+  ) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const requiredRoles = this.reflector.getAllAndOverride<string[]>(
       ROLES_KEY,
       [context.getHandler(), context.getClass()],
@@ -33,8 +37,9 @@ export class RolesGuard implements CanActivate {
       throw new ForbiddenException('Acceso denegado: usuario no autenticado');
     }
 
+    const userRoles: string[] = user.roles || [];
+
     if (requiredRoles) {
-      const userRoles: string[] = user.roles || [];
       const hasRole = requiredRoles.some((role) => userRoles.includes(role));
       if (!hasRole) {
         throw new ForbiddenException(
@@ -48,6 +53,19 @@ export class RolesGuard implements CanActivate {
       if (!userPermisos.includes(requiredPermiso)) {
         throw new ForbiddenException(
           'Acceso denegado: no posee el permiso requerido',
+        );
+      }
+    }
+
+    // Soft-lock: if user has a companyId and is not SuperUsuario, check company status
+    if (user.companyId && !userRoles.includes('SuperUsuario')) {
+      const empresa = await this.prisma.empresa.findUnique({
+        where: { id: user.companyId },
+        select: { estado: true },
+      });
+      if (empresa && empresa.estado === 'SUSPENDIDA') {
+        throw new ForbiddenException(
+          'Acceso denegado: la empresa se encuentra suspendida',
         );
       }
     }
