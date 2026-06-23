@@ -21,6 +21,7 @@ import { RefaccionesModule } from './modules/refacciones/refacciones.module';
 import { InventariosModule } from './modules/inventarios/inventarios.module';
 import { CashDeskModule } from './modules/cash-desk/cash-desk.module';
 import { NotificacionesModule } from './modules/notificaciones/notificaciones.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { RolesGuard } from './modules/rbac/guards/roles.guard';
 
 @Module({
@@ -46,6 +47,7 @@ import { RolesGuard } from './modules/rbac/guards/roles.guard';
     InventariosModule,
     CashDeskModule,
     NotificacionesModule,
+    DashboardModule,
   ],
   providers: [
     {
