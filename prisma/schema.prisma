@@ -193,6 +193,8 @@ model Empresa {
   recepciones     RecepcionVehiculo[]
   ordenesTrabajo  OrdenTrabajo[]
   cotizaciones    Cotizacion[]
+  proveedores     Proveedor[]
+  ordenesCompra   OrdenCompra[]
 
   @@map("Empresa")
 }
@@ -671,4 +673,76 @@ model CotizacionDetalle {
 
   @@index([cotizacionId])
   @@map("CotizacionDetalle")
+}
+
+model Proveedor {
+  id        String   @id @default(uuid()) @map("id")
+  empresaId String   @map("empresa_id")
+  nombre    String   @map("nombre")
+  rfc       String?  @map("rfc")
+  email     String?  @map("email")
+  telefono  String?  @map("telefono")
+  direccion String?  @map("direccion")
+  contacto  String?  @map("contacto")
+  estado    String   @default("ACTIVO") @map("estado")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
+
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  ordenesCompra OrdenCompra[]
+
+  @@unique([empresaId, rfc])
+  @@index([empresaId])
+  @@index([nombre])
+  @@map("Proveedor")
+}
+
+model OrdenCompra {
+  id          String   @id @default(uuid()) @map("id")
+  empresaId   String   @map("empresa_id")
+  proveedorId String   @map("proveedor_id")
+  folio       String   @map("folio")
+  estado      String   @default("BORRADOR") @map("estado") // BORRADOR, ENVIADA, RECIBIDA, CANCELADA
+  descripcion String?  @map("descripcion")
+  subtotal    Decimal  @default(0) @map("subtotal")
+  descuento   Decimal  @default(0) @map("descuento")
+  iva         Decimal  @default(0) @map("iva")
+  total       Decimal  @default(0) @map("total")
+  fechaPedido DateTime? @map("fecha_pedido")
+  fechaRecibido DateTime? @map("fecha_recibido")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
+
+  empresa  Empresa             @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  proveedor Proveedor          @relation(fields: [proveedorId], references: [id])
+  detalles OrdenCompraDetalle[]
+
+  @@unique([empresaId, folio])
+  @@index([empresaId])
+  @@index([proveedorId])
+  @@index([estado])
+  @@map("OrdenCompra")
+}
+
+model OrdenCompraDetalle {
+  id            String  @id @default(uuid()) @map("id")
+  ordenCompraId String  @map("orden_compra_id")
+  descripcion   String  @map("descripcion")
+  cantidad      Int     @default(1) @map("cantidad")
+  precioUnitario Decimal @map("precio_unitario")
+  descuento     Decimal @default(0) @map("descuento")
+  subtotal      Decimal @default(0) @map("subtotal")
+  iva           Decimal @default(0) @map("iva")
+  total         Decimal @default(0) @map("total")
+
+  ordenCompra OrdenCompra @relation(fields: [ordenCompraId], references: [id], onDelete: Cascade)
+
+  @@index([ordenCompraId])
+  @@map("OrdenCompraDetalle")
 }

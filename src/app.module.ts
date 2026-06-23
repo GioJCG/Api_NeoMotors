@@ -15,6 +15,8 @@ import { VehiculosModule } from './modules/vehiculos/vehiculos.module';
 import { CitasModule } from './modules/citas/citas.module';
 import { WorkOrdersModule } from './modules/work-orders/work-orders.module';
 import { QuotesModule } from './modules/quotes/quotes.module';
+import { ProveedoresModule } from './modules/proveedores/proveedores.module';
+import { OrdenesCompraModule } from './modules/ordenes-compra/ordenes-compra.module';
 import { RolesGuard } from './modules/rbac/guards/roles.guard';
 
 @Module({
@@ -34,6 +36,8 @@ import { RolesGuard } from './modules/rbac/guards/roles.guard';
     CitasModule,
     WorkOrdersModule,
     QuotesModule,
+    ProveedoresModule,
+    OrdenesCompraModule,
   ],
   providers: [
     {
