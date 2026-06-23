@@ -17,6 +17,8 @@ import { WorkOrdersModule } from './modules/work-orders/work-orders.module';
 import { QuotesModule } from './modules/quotes/quotes.module';
 import { ProveedoresModule } from './modules/proveedores/proveedores.module';
 import { OrdenesCompraModule } from './modules/ordenes-compra/ordenes-compra.module';
+import { RefaccionesModule } from './modules/refacciones/refacciones.module';
+import { InventariosModule } from './modules/inventarios/inventarios.module';
 import { RolesGuard } from './modules/rbac/guards/roles.guard';
 
 @Module({
@@ -38,6 +40,8 @@ import { RolesGuard } from './modules/rbac/guards/roles.guard';
     QuotesModule,
     ProveedoresModule,
     OrdenesCompraModule,
+    RefaccionesModule,
+    InventariosModule,
   ],
   providers: [
     {

@@ -195,6 +195,9 @@ model Empresa {
   cotizaciones    Cotizacion[]
   proveedores     Proveedor[]
   ordenesCompra   OrdenCompra[]
+  refacciones     Refaccion[]
+  inventarios     Inventario[]
+  movimientosInv  MovimientoInventario[]
 
   @@map("Empresa")
 }
@@ -220,6 +223,8 @@ model Sucursal {
   citas             Cita[]
   recepciones       RecepcionVehiculo[]
   ordenesTrabajo    OrdenTrabajo[]
+  inventarios       Inventario[]
+  movimientosInv    MovimientoInventario[]
 
   @@map("Sucursal")
 }
@@ -745,4 +750,87 @@ model OrdenCompraDetalle {
 
   @@index([ordenCompraId])
   @@map("OrdenCompraDetalle")
+}
+
+model Refaccion {
+  id          String   @id @default(uuid()) @map("id")
+  empresaId   String   @map("empresa_id")
+  codigo      String   @map("codigo")
+  nombre      String   @map("nombre")
+  descripcion String?  @map("descripcion")
+  precio      Decimal  @default(0) @map("precio")
+  costo       Decimal  @default(0) @map("costo")
+  unidad      String   @default("PIEZA") @map("unidad")
+  estado      String   @default("ACTIVO") @map("estado")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
+
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  inventarios Inventario[]
+  movimientosInv MovimientoInventario[]
+
+  @@unique([empresaId, codigo])
+  @@index([empresaId])
+  @@index([nombre])
+  @@map("Refaccion")
+}
+
+model Inventario {
+  id           String  @id @default(uuid()) @map("id")
+  empresaId    String  @map("empresa_id")
+  sucursalId   String  @map("sucursal_id")
+  refaccionId  String  @map("refaccion_id")
+  stockActual  Int     @default(0) @map("stock_actual")
+  stockMinimo  Int     @default(0) @map("stock_minimo")
+  precioPromedio Decimal @default(0) @map("precio_promedio")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  empresa   Empresa   @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  sucursal  Sucursal  @relation(fields: [sucursalId], references: [id])
+  refaccion Refaccion @relation(fields: [refaccionId], references: [id])
+
+  @@unique([empresaId, sucursalId, refaccionId])
+  @@index([empresaId])
+  @@index([sucursalId])
+  @@index([refaccionId])
+  @@map("Inventario")
+}
+
+enum TipoMovimiento {
+  ENTRADA_POR_COMPRA
+  SALIDA_POR_ORDEN
+  AJUSTE_INVENTARIO
+  TRANSFERENCIA
+}
+
+model MovimientoInventario {
+  id              String          @id @default(uuid()) @map("id")
+  empresaId       String          @map("empresa_id")
+  sucursalId      String          @map("sucursal_id")
+  refaccionId     String          @map("refaccion_id")
+  tipo            String          @map("tipo") // ENTRADA_POR_COMPRA, SALIDA_POR_ORDEN, AJUSTE_INVENTARIO, TRANSFERENCIA
+  cantidad        Int             @map("cantidad")
+  stockAnterior   Int             @map("stock_anterior")
+  stockNuevo      Int             @map("stock_nuevo")
+  referencia      String?         @map("referencia") // ej. OrdenCompraID, OrdenTrabajoID
+  observaciones   String?         @map("observaciones")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  createdBy String?  @map("created_by")
+
+  empresa   Empresa   @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  sucursal  Sucursal  @relation(fields: [sucursalId], references: [id])
+  refaccion Refaccion @relation(fields: [refaccionId], references: [id])
+
+  @@index([empresaId])
+  @@index([sucursalId])
+  @@index([refaccionId])
+  @@index([tipo])
+  @@index([createdAt])
+  @@map("MovimientoInventario")
 }

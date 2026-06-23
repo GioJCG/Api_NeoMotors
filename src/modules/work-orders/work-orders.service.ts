@@ -4,6 +4,7 @@ import { AuditoriaService } from '../auditoria/auditoria.service';
 import { CreateReceptionDto } from './dto/create-reception.dto';
 import { CreateDiagnosticoDto } from './dto/create-diagnostico.dto';
 import { TrackTimeDto } from './dto/track-time.dto';
+import { UpdateWorkOrderStatusDto } from './dto/update-status.dto';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -291,6 +292,52 @@ export class WorkOrdersService {
         tecnico: { select: { id: true, nombre: true, email: true } },
       },
     });
+  }
+
+  async updateStatus(id: string, dto: UpdateWorkOrderStatusDto, user: { id: string; roles: string[]; companyId?: string | null }, ip?: string) {
+    const orden = await this.findById(id, user);
+
+    const transitions: Record<string, string[]> = {
+      RECIBIDO: ['DIAGNOSTICO', 'CANCELADO'],
+      DIAGNOSTICO: ['PRESUPUESTADO', 'CANCELADO'],
+      PRESUPUESTADO: ['APROBADO', 'CANCELADO'],
+      APROBADO: ['TRABAJANDO', 'CANCELADO'],
+      TRABAJANDO: ['TERMINADO', 'CANCELADO'],
+      TERMINADO: ['FACTURADO', 'ENTREGADO', 'CANCELADO'],
+      FACTURADO: ['ENTREGADO', 'CANCELADO'],
+      ENTREGADO: [],
+      CANCELADO: [],
+    };
+
+    const allowed = transitions[orden.estado] || [];
+    if (!allowed.includes(dto.estado)) {
+      throw new BadRequestException(`No se puede cambiar de ${orden.estado} a ${dto.estado}`);
+    }
+
+    const updateData: any = {
+      estado: dto.estado,
+      updatedBy: user.id,
+    };
+
+    if (dto.estado === 'TRABAJANDO') updateData.fechaInicio = new Date();
+    if (dto.estado === 'ENTREGADO' || dto.estado === 'TERMINADO') updateData.fechaFin = new Date();
+
+    const updated = await this.prisma.ordenTrabajo.update({
+      where: { id },
+      data: updateData,
+    });
+
+    await this.auditoria.registrar({
+      usuarioId: user.id,
+      accion: 'CAMBIAR_ESTADO',
+      entidad: 'OrdenTrabajo',
+      entidadId: id,
+      payload: { de: orden.estado, a: dto.estado },
+      contexto: `Empresa: ${orden.empresaId}`,
+      ip,
+    });
+
+    return updated;
   }
 
   private async generateFolio(empresaId: string): Promise<string> {
