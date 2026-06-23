@@ -44,6 +44,7 @@ model Usuario {
   tiemposTecnico      TiempoTecnico[]
   cajasApertura       Caja[]    @relation("CajaApertura")
   cajasCierre         Caja[]    @relation("CajaCierre")
+  notificaciones      NotificacionTaller[]
 
   @@map("Usuario")
 }
@@ -202,6 +203,7 @@ model Empresa {
   movimientosInv  MovimientoInventario[]
   cajas           Caja[]
   pagos           Pago[]
+  notificaciones  NotificacionTaller[]
 
   @@map("Empresa")
 }
@@ -231,6 +233,7 @@ model Sucursal {
   movimientosInv    MovimientoInventario[]
   cajas             Caja[]
   pagos             Pago[]
+  notificaciones    NotificacionTaller[]
 
   @@map("Sucursal")
 }
@@ -919,4 +922,31 @@ model Pago {
   @@index([ordenTrabajoId])
   @@index([createdAt])
   @@map("Pago")
+}
+
+model NotificacionTaller {
+  id              String   @id @default(uuid()) @map("id")
+  empresaId       String   @map("empresa_id")
+  sucursalId      String?  @map("sucursal_id")
+  usuarioId       String?  @map("usuario_id")
+  tipo            String   @map("tipo") // ORDEN_TERMINADA, COTIZACION_APROBACION, PAGO_REGISTRADO, SISTEMA
+  titulo          String   @map("titulo")
+  mensaje         String   @map("mensaje")
+  referencia      String?  @map("referencia") // OrdenTrabajoID, CotizacionID, etc.
+  leida           Boolean  @default(false) @map("leida")
+  fechaLectura    DateTime? @map("fecha_lectura")
+  prioridad       String   @default("NORMAL") @map("prioridad") // BAJA, NORMAL, ALTA, URGENTE
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  empresa  Empresa   @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  sucursal Sucursal? @relation(fields: [sucursalId], references: [id])
+  usuario  Usuario?  @relation(fields: [usuarioId], references: [id])
+
+  @@index([empresaId])
+  @@index([sucursalId])
+  @@index([usuarioId])
+  @@index([leida])
+  @@index([createdAt])
+  @@map("NotificacionTaller")
 }

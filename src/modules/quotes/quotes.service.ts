@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditoriaService } from '../auditoria/auditoria.service';
 import { CreateQuoteDto } from './dto/create-quote.dto';
@@ -9,6 +10,7 @@ export class QuotesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditoria: AuditoriaService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   private readonly IVA_RATE = 0.16;
@@ -182,6 +184,14 @@ export class QuotesService {
       data: updateData,
       include: { detalles: { orderBy: { id: 'asc' } } },
     });
+
+    if (dto.estado === 'ENVIADA') {
+      this.eventEmitter.emit('cotizacion.para_aprobar', {
+        cotizacionId: id,
+        empresaId: cotizacion.empresaId,
+        folio: cotizacion.folio,
+      });
+    }
 
     await this.auditoria.registrar({
       usuarioId: user.id,
