@@ -1,7 +1,9 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditoriaService } from '../auditoria/auditoria.service';
 import { CreateReceptionDto } from './dto/create-reception.dto';
+import { CreateDiagnosticoDto } from './dto/create-diagnostico.dto';
+import { TrackTimeDto } from './dto/track-time.dto';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -145,6 +147,150 @@ export class WorkOrdersService {
     }
 
     return orden;
+  }
+
+  async diagnose(id: string, dto: CreateDiagnosticoDto, user: { id: string; roles: string[]; companyId?: string | null }, ip?: string) {
+    const orden = await this.findById(id, user);
+
+    if (orden.estado !== 'DIAGNOSTICO') {
+      throw new BadRequestException('La orden de trabajo debe estar en estado DIAGNÓSTICO para registrar un diagnóstico');
+    }
+
+    const diagnostico = await this.prisma.diagnostico.create({
+      data: {
+        ordenTrabajoId: id,
+        tecnicoId: user.id,
+        sintomas: dto.sintomas,
+        fallasEncontradas: dto.fallasEncontradas,
+        desgastesPiezas: dto.desgastesPiezas,
+        conclusion: dto.conclusion,
+        createdBy: user.id,
+      },
+    });
+
+    await this.auditoria.registrar({
+      usuarioId: user.id,
+      accion: 'DIAGNOSTICAR',
+      entidad: 'Diagnostico',
+      entidadId: diagnostico.id,
+      payload: dto as any,
+      contexto: `Orden: ${orden.folio}`,
+      ip,
+    });
+
+    return diagnostico;
+  }
+
+  async trackTime(id: string, dto: TrackTimeDto, user: { id: string; roles: string[]; companyId?: string | null }, ip?: string) {
+    const orden = await this.findById(id, user);
+
+    switch (dto.action) {
+      case 'start':
+      case 'resume': {
+        const activeRecord = await this.prisma.tiempoTecnico.findFirst({
+          where: { ordenTrabajoId: id, tecnicoId: user.id, estado: 'ACTIVO' },
+        });
+        if (activeRecord) {
+          throw new BadRequestException('Ya tiene un registro de tiempo activo para esta orden');
+        }
+
+        const tiempo = await this.prisma.tiempoTecnico.create({
+          data: {
+            ordenTrabajoId: id,
+            tecnicoId: user.id,
+            horaInicio: new Date(),
+            estado: 'ACTIVO',
+            createdBy: user.id,
+          },
+        });
+
+        await this.auditoria.registrar({
+          usuarioId: user.id,
+          accion: dto.action === 'start' ? 'INICIAR_TIEMPO' : 'REANUDAR_TIEMPO',
+          entidad: 'TiempoTecnico',
+          entidadId: tiempo.id,
+          payload: { ordenFolio: orden.folio, action: dto.action } as any,
+          ip,
+        });
+
+        return tiempo;
+      }
+
+      case 'pause': {
+        const active = await this.prisma.tiempoTecnico.findFirst({
+          where: { ordenTrabajoId: id, tecnicoId: user.id, estado: 'ACTIVO' },
+        });
+        if (!active) {
+          throw new BadRequestException('No tiene un registro de tiempo activo para pausar');
+        }
+
+        const tiempo = await this.prisma.tiempoTecnico.update({
+          where: { id: active.id },
+          data: { horaFin: new Date(), estado: 'PAUSADO' },
+        });
+
+        await this.auditoria.registrar({
+          usuarioId: user.id,
+          accion: 'PAUSAR_TIEMPO',
+          entidad: 'TiempoTecnico',
+          entidadId: tiempo.id,
+          ip,
+        });
+
+        return tiempo;
+      }
+
+      case 'stop': {
+        const active = await this.prisma.tiempoTecnico.findFirst({
+          where: { ordenTrabajoId: id, tecnicoId: user.id, estado: 'ACTIVO' },
+        });
+        if (!active) {
+          throw new BadRequestException('No tiene un registro de tiempo activo para detener');
+        }
+
+        const tiempo = await this.prisma.tiempoTecnico.update({
+          where: { id: active.id },
+          data: { horaFin: new Date(), estado: 'COMPLETADO' },
+        });
+
+        await this.auditoria.registrar({
+          usuarioId: user.id,
+          accion: 'DETENER_TIEMPO',
+          entidad: 'TiempoTecnico',
+          entidadId: tiempo.id,
+          ip,
+        });
+
+        return tiempo;
+      }
+
+      default:
+        throw new BadRequestException(`Acción no válida: ${dto.action}`);
+    }
+  }
+
+  async getDiagnosticos(id: string, user: { id: string; roles: string[]; companyId?: string | null }) {
+    await this.findById(id, user);
+
+    return this.prisma.diagnostico.findMany({
+      where: { ordenTrabajoId: id },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        tecnico: { select: { id: true, nombre: true, email: true } },
+      },
+    });
+  }
+
+  async getTimeRecords(id: string, user: { id: string; roles: string[]; companyId?: string | null }) {
+    await this.findById(id, user);
+
+    return this.prisma.tiempoTecnico.findMany({
+      where: { ordenTrabajoId: id },
+      orderBy: { horaInicio: 'desc' },
+      include: {
+        tecnico: { select: { id: true, nombre: true, email: true } },
+      },
+    });
   }
 
   private async generateFolio(empresaId: string): Promise<string> {

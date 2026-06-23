@@ -10,6 +10,8 @@ import {
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { WorkOrdersService } from './work-orders.service';
 import { CreateReceptionDto } from './dto/create-reception.dto';
+import { CreateDiagnosticoDto } from './dto/create-diagnostico.dto';
+import { TrackTimeDto } from './dto/track-time.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { Roles } from '../rbac/decorators/roles.decorator';
 import type { Request } from 'express';
@@ -40,5 +42,33 @@ export class WorkOrdersController {
   @ApiOperation({ summary: 'Obtener orden de trabajo por ID' })
   findById(@Param('id') id: string, @Req() req: Request) {
     return this.workOrdersService.findById(id, req.user as any);
+  }
+
+  @Post(':id/diagnose')
+  @Roles('SuperUsuario', 'AdministradorEmpresa', 'SupervisorSucursal', 'Operador')
+  @ApiOperation({ summary: 'Registrar diagnóstico técnico' })
+  diagnose(@Param('id') id: string, @Body() dto: CreateDiagnosticoDto, @Req() req: Request) {
+    return this.workOrdersService.diagnose(id, dto, req.user as any, req.ip);
+  }
+
+  @Get(':id/diagnoses')
+  @Roles('SuperUsuario', 'AdministradorEmpresa', 'SupervisorSucursal', 'Operador', 'Consulta')
+  @ApiOperation({ summary: 'Listar diagnósticos de la orden' })
+  getDiagnosticos(@Param('id') id: string, @Req() req: Request) {
+    return this.workOrdersService.getDiagnosticos(id, req.user as any);
+  }
+
+  @Post(':id/track-time')
+  @Roles('SuperUsuario', 'AdministradorEmpresa', 'SupervisorSucursal', 'Operador')
+  @ApiOperation({ summary: 'Control de tiempo (play/pause/stop)' })
+  trackTime(@Param('id') id: string, @Body() dto: TrackTimeDto, @Req() req: Request) {
+    return this.workOrdersService.trackTime(id, dto, req.user as any, req.ip);
+  }
+
+  @Get(':id/time-records')
+  @Roles('SuperUsuario', 'AdministradorEmpresa', 'SupervisorSucursal', 'Operador', 'Consulta')
+  @ApiOperation({ summary: 'Obtener registros de tiempo' })
+  getTimeRecords(@Param('id') id: string, @Req() req: Request) {
+    return this.workOrdersService.getTimeRecords(id, req.user as any);
   }
 }
