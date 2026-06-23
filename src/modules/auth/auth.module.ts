@@ -18,13 +18,20 @@ import { MicrosoftStrategy } from './strategies/microsoft.strategy';
       useFactory: (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET')!,
         signOptions: {
-          expiresIn: (configService.get<string>('JWT_EXPIRATION') || '15m') as any,
+          expiresIn: (configService.get<string>('JWT_EXPIRATION') ||
+            '15m') as any,
         },
       }),
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, GoogleStrategy, GithubStrategy, MicrosoftStrategy],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    GoogleStrategy,
+    GithubStrategy,
+    MicrosoftStrategy,
+  ],
   exports: [JwtStrategy, PassportModule],
 })
 export class AuthModule {}

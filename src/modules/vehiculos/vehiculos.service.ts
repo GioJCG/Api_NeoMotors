@@ -4,6 +4,7 @@ import {
   ConflictException,
   ForbiddenException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditoriaService } from '../auditoria/auditoria.service';
 import { CreateVehiculoDto } from './dto/create-vehiculo.dto';
@@ -168,6 +169,17 @@ export class VehiculosService {
     await this.findById(id, user);
     // Work orders not yet implemented (Task 7.x) — returns empty for now
     return { workOrders: [], diagnoses: [], partsConsumed: [] };
+  }
+
+  async findAllMarcas() {
+    return this.prisma.marca.findMany({ orderBy: { nombre: 'asc' } });
+  }
+
+  async findModelosByMarca(marcaId: string) {
+    return this.prisma.modelo.findMany({
+      where: { marcaId },
+      orderBy: { nombre: 'asc' },
+    });
   }
 
   private async ensureUniquePlate(empresaId: string, placa: string, excludeId?: string) {

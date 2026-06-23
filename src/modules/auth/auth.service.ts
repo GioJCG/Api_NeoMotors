@@ -1,4 +1,10 @@
-import { Injectable, ConflictException, BadRequestException, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  BadRequestException,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { v4 as uuidv4 } from 'uuid';
@@ -47,7 +53,9 @@ export class AuthService {
 
     const verificationToken = uuidv4();
     const expirationDate = new Date();
-    expirationDate.setHours(expirationDate.getHours() + this.TOKEN_EXPIRATION_HOURS);
+    expirationDate.setHours(
+      expirationDate.getHours() + this.TOKEN_EXPIRATION_HOURS,
+    );
 
     await this.prisma.verificacionCuenta.create({
       data: {
@@ -58,7 +66,8 @@ export class AuthService {
     });
 
     return {
-      message: 'Usuario registrado exitosamente. Se ha enviado un token de verificación.',
+      message:
+        'Usuario registrado exitosamente. Se ha enviado un token de verificación.',
       verificationToken,
       expiresIn: `${this.TOKEN_EXPIRATION_HOURS} horas`,
     };
@@ -75,7 +84,9 @@ export class AuthService {
     }
 
     if (verification.usado) {
-      throw new BadRequestException('El token de verificación ya fue utilizado');
+      throw new BadRequestException(
+        'El token de verificación ya fue utilizado',
+      );
     }
 
     if (new Date() > verification.expiraEn) {
@@ -108,7 +119,9 @@ export class AuthService {
     }
 
     if (user.estado === 'PENDIENTE') {
-      throw new UnauthorizedException('La cuenta no ha sido verificada. Revise su correo.');
+      throw new UnauthorizedException(
+        'La cuenta no ha sido verificada. Revise su correo.',
+      );
     }
 
     if (user.estado === 'INACTIVO' || user.estado === 'BLOQUEADO') {
@@ -116,15 +129,24 @@ export class AuthService {
     }
 
     if (user.bloqueadoHasta && new Date() < user.bloqueadoHasta) {
-      const minutesLeft = Math.ceil((user.bloqueadoHasta.getTime() - Date.now()) / 60000);
-      throw new UnauthorizedException(`Cuenta bloqueada. Intente de nuevo en ${minutesLeft} minutos.`);
+      const minutesLeft = Math.ceil(
+        (user.bloqueadoHasta.getTime() - Date.now()) / 60000,
+      );
+      throw new UnauthorizedException(
+        `Cuenta bloqueada. Intente de nuevo en ${minutesLeft} minutos.`,
+      );
     }
 
     if (!user.passwordHash) {
-      throw new UnauthorizedException('Esta cuenta no tiene contraseña. Use inicio de sesión con proveedor social.');
+      throw new UnauthorizedException(
+        'Esta cuenta no tiene contraseña. Use inicio de sesión con proveedor social.',
+      );
     }
 
-    const isPasswordValid = await bcrypt.compare(dto.password, user.passwordHash);
+    const isPasswordValid = await bcrypt.compare(
+      dto.password,
+      user.passwordHash,
+    );
 
     if (!isPasswordValid) {
       const newAttempts = user.intentosFallidos + 1;
@@ -132,7 +154,9 @@ export class AuthService {
 
       if (newAttempts >= this.MAX_LOGIN_ATTEMPTS) {
         const blockUntil = new Date();
-        blockUntil.setMinutes(blockUntil.getMinutes() + this.BLOCK_DURATION_MINUTES);
+        blockUntil.setMinutes(
+          blockUntil.getMinutes() + this.BLOCK_DURATION_MINUTES,
+        );
         updateData.bloqueadoHasta = blockUntil;
         updateData.estado = 'BLOQUEADO';
       }
@@ -160,9 +184,16 @@ export class AuthService {
     return this.generateAuthTokens(user);
   }
 
-  async loginWithOAuth(oauthUser: { email: string; nombre: string; provider: string; providerId: string }) {
+  async loginWithOAuth(oauthUser: {
+    email: string;
+    nombre: string;
+    provider: string;
+    providerId: string;
+  }) {
     if (!oauthUser.email) {
-      throw new BadRequestException('El proveedor OAuth no proporcionó un correo electrónico');
+      throw new BadRequestException(
+        'El proveedor OAuth no proporcionó un correo electrónico',
+      );
     }
 
     const existingUser = await this.prisma.usuario.findUnique({
@@ -172,7 +203,9 @@ export class AuthService {
 
     if (existingUser) {
       const alreadyLinked = existingUser.proveedoresSociales.some(
-        (p) => p.provider === oauthUser.provider && p.providerId === oauthUser.providerId,
+        (p) =>
+          p.provider === oauthUser.provider &&
+          p.providerId === oauthUser.providerId,
       );
 
       if (!alreadyLinked) {
@@ -219,7 +252,10 @@ export class AuthService {
     });
 
     if (!user) {
-      return { message: 'Si el correo está registrado, recibirá un enlace de recuperación.' };
+      return {
+        message:
+          'Si el correo está registrado, recibirá un enlace de recuperación.',
+      };
     }
 
     const resetToken = uuidv4();
@@ -235,7 +271,8 @@ export class AuthService {
     });
 
     return {
-      message: 'Si el correo está registrado, recibirá un enlace de recuperación.',
+      message:
+        'Si el correo está registrado, recibirá un enlace de recuperación.',
       resetToken,
       expiresIn: `${this.RESET_TOKEN_HOURS} hora`,
     };
@@ -252,7 +289,9 @@ export class AuthService {
     }
 
     if (resetToken.usado) {
-      throw new BadRequestException('El token de recuperación ya fue utilizado');
+      throw new BadRequestException(
+        'El token de recuperación ya fue utilizado',
+      );
     }
 
     if (new Date() > resetToken.expiraEn) {
@@ -328,7 +367,11 @@ export class AuthService {
     };
   }
 
-  private generateAccessToken(user: any, roles: string[] = [], permisos: string[] = []): string {
+  private generateAccessToken(
+    user: any,
+    roles: string[] = [],
+    permisos: string[] = [],
+  ): string {
     const payload = {
       sub: user.id,
       email: user.email,

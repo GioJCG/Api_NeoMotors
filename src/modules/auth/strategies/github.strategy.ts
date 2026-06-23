@@ -14,7 +14,12 @@ export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
     });
   }
 
-  validate(accessToken: string, refreshToken: string, profile: any, done: (...args: any[]) => void): any {
+  validate(
+    accessToken: string,
+    refreshToken: string,
+    profile: any,
+    done: (...args: any[]) => void,
+  ): any {
     const user = {
       email: profile.emails?.[0]?.value || `${profile.id}@github.local`,
       nombre: profile.displayName || profile.username,

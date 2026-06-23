@@ -202,7 +202,8 @@ model Empresa {
   inventarios     Inventario[]
   movimientosInv  MovimientoInventario[]
   cajas           Caja[]
-  pagos           Pago[]
+  pagos             Pago[]
+  facturasFiscales  FacturaFiscal[]
   notificaciones  NotificacionTaller[]
   certificadosFiscales CertificadoFiscal[]
 
@@ -591,6 +592,7 @@ model OrdenTrabajo {
   tiemposTecnico    TiempoTecnico[]
   cotizaciones      Cotizacion[]
   pagos             Pago[]
+  facturasFiscales  FacturaFiscal[]
 
   @@unique([empresaId, folio])
   @@index([empresaId])
@@ -974,4 +976,68 @@ model CertificadoFiscal {
 
   @@index([empresaId])
   @@map("CertificadoFiscal")
+}
+
+enum FacturaStatus {
+  GENERADA
+  TIMBRADA
+  CANCELADA
+}
+
+model FacturaFiscal {
+  id              String        @id @default(uuid()) @map("id")
+  empresaId       String        @map("empresa_id")
+  ordenTrabajoId  String        @map("orden_trabajo_id")
+  folio           String        @map("folio") // Serie + Folio, ej. F1001
+  uuid            String?       @unique @map("uuid") // UUID del timbrado
+  estado          FacturaStatus @default(GENERADA) @map("estado")
+  xmlTimbrado     String?       @map("xml_timbrado") // XML timbrado final
+  fechaTimbrado   DateTime?     @map("fecha_timbrado")
+
+  // Receptor
+  receptorRfc     String  @map("receptor_rfc")
+  receptorNombre  String  @map("receptor_nombre")
+  receptorDomicilio String? @map("receptor_domicilio")
+
+  // Totales
+  subtotal        Decimal @default(0) @map("subtotal")
+  descuento       Decimal @default(0) @map("descuento")
+  iva             Decimal @default(0) @map("iva")
+  total           Decimal @default(0) @map("total")
+  metodoPago      String  @default("PUE") @map("metodo_pago") // PUE, PPD
+  formaPago       String  @default("01") @map("forma_pago") // 01=Efectivo, 03=Transferencia, 04=Tarjeta, etc.
+  usoCfdi         String  @default("G03") @map("uso_cfdi")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  createdBy String?  @map("created_by")
+
+  empresa      Empresa             @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  ordenTrabajo OrdenTrabajo        @relation(fields: [ordenTrabajoId], references: [id])
+  detalles     FacturaFiscalDetalle[]
+
+  @@unique([empresaId, folio])
+  @@index([empresaId])
+  @@index([ordenTrabajoId])
+  @@index([uuid])
+  @@map("FacturaFiscal")
+}
+
+model FacturaFiscalDetalle {
+  id            String  @id @default(uuid()) @map("id")
+  facturaId     String  @map("factura_id")
+  cantidad      Decimal @default(1) @map("cantidad")
+  claveProdServ String  @default("78111805") @map("clave_prod_serv") // SAT product/service code
+  claveUnidad   String  @default("E48") @map("clave_unidad") // SAT unit code
+  unidad        String  @default("Servicio") @map("unidad")
+  descripcion   String  @map("descripcion")
+  precioUnitario Decimal @map("precio_unitario")
+  importe       Decimal @map("importe")
+  descuento     Decimal @default(0) @map("descuento")
+  iva           Decimal @default(0) @map("iva")
+  total         Decimal @default(0) @map("total")
+
+  factura FacturaFiscal @relation(fields: [facturaId], references: [id], onDelete: Cascade)
+
+  @@index([facturaId])
+  @@map("FacturaFiscalDetalle")
 }

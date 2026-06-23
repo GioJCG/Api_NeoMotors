@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 
 @Injectable()
@@ -46,8 +50,14 @@ export class RolesService {
     });
   }
 
-  async create(data: { nombre: string; descripcion?: string; esGlobal?: boolean }) {
-    const existing = await this.prisma.rol.findUnique({ where: { nombre: data.nombre } });
+  async create(data: {
+    nombre: string;
+    descripcion?: string;
+    esGlobal?: boolean;
+  }) {
+    const existing = await this.prisma.rol.findUnique({
+      where: { nombre: data.nombre },
+    });
     if (existing) {
       throw new ConflictException('El rol ya existe');
     }
@@ -78,7 +88,9 @@ export class RolesService {
 
   async assignPermiso(rolId: string, permisoId: string) {
     await this.findById(rolId);
-    const permiso = await this.prisma.permiso.findUnique({ where: { id: permisoId } });
+    const permiso = await this.prisma.permiso.findUnique({
+      where: { id: permisoId },
+    });
     if (!permiso) {
       throw new NotFoundException('Permiso no encontrado');
     }

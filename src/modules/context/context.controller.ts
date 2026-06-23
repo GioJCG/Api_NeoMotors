@@ -1,8 +1,26 @@
-import { Controller, Get, Put, Body, Param, Query, Req, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Put,
+  Body,
+  Param,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { ContextService } from './context.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { SetCompanyContextDto, SetBranchContextDto, GetBranchesQueryDto } from './dto/set-context.dto';
+import {
+  SetCompanyContextDto,
+  SetBranchContextDto,
+  GetBranchesQueryDto,
+} from './dto/set-context.dto';
 import type { Request } from 'express';
 
 @ApiTags('Contexto')
@@ -20,7 +38,9 @@ export class ContextController {
   }
 
   @Get('branches')
-  @ApiOperation({ summary: 'Obtener sucursales disponibles del usuario en una empresa' })
+  @ApiOperation({
+    summary: 'Obtener sucursales disponibles del usuario en una empresa',
+  })
   async getBranches(@Query() query: GetBranchesQueryDto, @Req() req: Request) {
     const user = req.user as any;
     return this.contextService.getUserBranches(user.id, query.empresaId);
