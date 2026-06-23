@@ -186,6 +186,7 @@ model Empresa {
   sucursales      Sucursal[]
   usuariosAsignados UsuarioEmpresa[]
   clientes        Cliente[]
+  vehiculos       Vehiculo[]
 
   @@map("Empresa")
 }
@@ -257,6 +258,64 @@ model Auditoria {
   @@map("Auditoria")
 }
 
+model Marca {
+  id        String   @id @default(uuid()) @map("id")
+  nombre    String   @unique @map("nombre")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+
+  modelos  Modelo[]
+  vehiculos Vehiculo[]
+
+  @@map("Marca")
+}
+
+model Modelo {
+  id      String @id @default(uuid()) @map("id")
+  marcaId String @map("marca_id")
+  nombre  String @map("nombre")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  createdBy String? @map("created_by")
+
+  marca   Marca     @relation(fields: [marcaId], references: [id], onDelete: Cascade)
+  vehiculos Vehiculo[]
+
+  @@unique([marcaId, nombre])
+  @@map("Modelo")
+}
+
+model Vehiculo {
+  id         String   @id @default(uuid()) @map("id")
+  empresaId  String   @map("empresa_id")
+  clienteId  String   @map("cliente_id")
+  marcaId    String   @map("marca_id")
+  modeloId   String   @map("modelo_id")
+  placa      String   @map("placa")
+  numeroSerie String? @map("numero_serie")
+  anio       Int?     @map("anio")
+  color      String?  @map("color")
+  estado     String   @default("ACTIVO") @map("estado")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
+
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  cliente Cliente @relation(fields: [clienteId], references: [id])
+  marca   Marca   @relation(fields: [marcaId], references: [id])
+  modelo  Modelo  @relation(fields: [modeloId], references: [id])
+
+  @@unique([empresaId, placa])
+  @@index([empresaId])
+  @@index([clienteId])
+  @@index([placa])
+  @@map("Vehiculo")
+}
+
 model Cliente {
   id        String   @id @default(uuid()) @map("id")
   empresaId String   @map("empresa_id")
@@ -273,6 +332,7 @@ model Cliente {
   updatedBy String?  @map("updated_by")
 
   empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  vehiculos Vehiculo[]
 
   @@unique([empresaId, rfc])
   @@unique([empresaId, email])
