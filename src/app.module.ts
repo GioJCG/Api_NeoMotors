@@ -14,6 +14,7 @@ import { ClientesModule } from './modules/clientes/clientes.module';
 import { VehiculosModule } from './modules/vehiculos/vehiculos.module';
 import { CitasModule } from './modules/citas/citas.module';
 import { WorkOrdersModule } from './modules/work-orders/work-orders.module';
+import { QuotesModule } from './modules/quotes/quotes.module';
 import { RolesGuard } from './modules/rbac/guards/roles.guard';
 
 @Module({
@@ -32,6 +33,7 @@ import { RolesGuard } from './modules/rbac/guards/roles.guard';
     VehiculosModule,
     CitasModule,
     WorkOrdersModule,
+    QuotesModule,
   ],
   providers: [
     {

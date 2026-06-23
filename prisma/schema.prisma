@@ -192,6 +192,7 @@ model Empresa {
   citas           Cita[]
   recepciones     RecepcionVehiculo[]
   ordenesTrabajo  OrdenTrabajo[]
+  cotizaciones    Cotizacion[]
 
   @@map("Empresa")
 }
@@ -571,6 +572,7 @@ model OrdenTrabajo {
   recepcion         RecepcionVehiculo? @relation("OrdenRecepcion", fields: [recepcionId], references: [id])
   diagnosticos      Diagnostico[]
   tiemposTecnico    TiempoTecnico[]
+  cotizaciones      Cotizacion[]
 
   @@unique([empresaId, folio])
   @@index([empresaId])
@@ -622,4 +624,51 @@ model TiempoTecnico {
   @@index([tecnicoId])
   @@index([estado])
   @@map("TiempoTecnico")
+}
+
+model Cotizacion {
+  id             String   @id @default(uuid()) @map("id")
+  empresaId      String   @map("empresa_id")
+  ordenTrabajoId String   @map("orden_trabajo_id")
+  folio          String   @map("folio")
+  estado         String   @default("BORRADOR") @map("estado") // BORRADOR, ENVIADA, APROBADA, RECHAZADA
+  subtotal       Decimal  @default(0) @map("subtotal")
+  descuento      Decimal  @default(0) @map("descuento")
+  iva            Decimal  @default(0) @map("iva")
+  total          Decimal  @default(0) @map("total")
+  notas          String?  @map("notas")
+  fechaValidez   DateTime? @map("fecha_validez")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  createdBy String?  @map("created_by")
+  updatedBy String?  @map("updated_by")
+
+  empresa      Empresa           @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  ordenTrabajo OrdenTrabajo      @relation(fields: [ordenTrabajoId], references: [id])
+  detalles     CotizacionDetalle[]
+
+  @@unique([empresaId, folio])
+  @@index([empresaId])
+  @@index([ordenTrabajoId])
+  @@index([estado])
+  @@map("Cotizacion")
+}
+
+model CotizacionDetalle {
+  id             String  @id @default(uuid()) @map("id")
+  cotizacionId   String  @map("cotizacion_id")
+  tipo           String  @map("tipo") // SERVICIO, MANO_OBRA, REFACCION
+  descripcion    String  @map("descripcion")
+  cantidad       Int     @default(1) @map("cantidad")
+  precioUnitario Decimal @map("precio_unitario")
+  descuento      Decimal @default(0) @map("descuento")
+  subtotal       Decimal @default(0) @map("subtotal")
+  iva            Decimal @default(0) @map("iva")
+  total          Decimal @default(0) @map("total")
+
+  cotizacion Cotizacion @relation(fields: [cotizacionId], references: [id], onDelete: Cascade)
+
+  @@index([cotizacionId])
+  @@map("CotizacionDetalle")
 }
