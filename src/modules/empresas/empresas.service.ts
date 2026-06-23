@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ForbiddenException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  ConflictException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditoriaService } from '../auditoria/auditoria.service';
 import { CreateEmpresaDto } from './dto/create-empresa.dto';
@@ -12,7 +17,9 @@ export class EmpresasService {
   ) {}
 
   async create(dto: CreateEmpresaDto, userId: string, ip?: string) {
-    const existing = await this.prisma.empresa.findUnique({ where: { rfc: dto.rfc } });
+    const existing = await this.prisma.empresa.findUnique({
+      where: { rfc: dto.rfc },
+    });
     if (existing) {
       throw new ConflictException('El RFC ya está registrado');
     }
@@ -44,7 +51,11 @@ export class EmpresasService {
     return empresa;
   }
 
-  async findAll(user: { id: string; roles: string[]; companyId?: string | null }) {
+  async findAll(user: {
+    id: string;
+    roles: string[];
+    companyId?: string | null;
+  }) {
     if (user.roles.includes('SuperUsuario')) {
       return this.prisma.empresa.findMany({
         orderBy: { createdAt: 'desc' },
@@ -52,7 +63,9 @@ export class EmpresasService {
     }
 
     if (!user.companyId) {
-      throw new ForbiddenException('El usuario no está asignado a ninguna empresa');
+      throw new ForbiddenException(
+        'El usuario no está asignado a ninguna empresa',
+      );
     }
 
     return this.prisma.empresa.findMany({
@@ -60,7 +73,10 @@ export class EmpresasService {
     });
   }
 
-  async findById(id: string, user: { id: string; roles: string[]; companyId?: string | null }) {
+  async findById(
+    id: string,
+    user: { id: string; roles: string[]; companyId?: string | null },
+  ) {
     const empresa = await this.prisma.empresa.findUnique({ where: { id } });
 
     if (!empresa) {
@@ -74,7 +90,12 @@ export class EmpresasService {
     return empresa;
   }
 
-  async update(id: string, dto: UpdateEmpresaDto, user: { id: string; roles: string[]; companyId?: string | null }, ip?: string) {
+  async update(
+    id: string,
+    dto: UpdateEmpresaDto,
+    user: { id: string; roles: string[]; companyId?: string | null },
+    ip?: string,
+  ) {
     await this.findById(id, user);
 
     const empresa = await this.prisma.empresa.update({
@@ -101,7 +122,9 @@ export class EmpresasService {
 
   async remove(id: string, user: { id: string; roles: string[] }, ip?: string) {
     if (!user.roles.includes('SuperUsuario')) {
-      throw new ForbiddenException('Solo el SuperUsuario puede eliminar empresas');
+      throw new ForbiddenException(
+        'Solo el SuperUsuario puede eliminar empresas',
+      );
     }
 
     const empresa = await this.prisma.empresa.findUnique({ where: { id } });

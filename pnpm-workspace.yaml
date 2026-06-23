@@ -4,11 +4,15 @@ allowBuilds:
   '-': true
   /: true
   '@': true
+  '@prisma/client': true
+  '@prisma/engines': true
+  '@scarf/scarf': true
   '[': true
   ']': true
   a: true
   c: true
   e: true
+  esbuild: true
   f: true
   g: true
   i: true
@@ -17,7 +21,10 @@ allowBuilds:
   n: true
   o: true
   p: true
+  prisma: true
   r: true
   s: true
   u: true
+  unrs-resolver: true
   v: true
+minimumReleaseAge: 0

@@ -1,5 +1,20 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Req, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { EmpresasService } from './empresas.service';
 import { CreateEmpresaDto } from './dto/create-empresa.dto';
 import { UpdateEmpresaDto } from './dto/update-empresa.dto';
@@ -41,7 +56,11 @@ export class EmpresasController {
   @Put(':id')
   @Roles('SuperUsuario', 'AdministradorEmpresa')
   @ApiOperation({ summary: 'Actualizar empresa' })
-  async update(@Param('id') id: string, @Body() dto: UpdateEmpresaDto, @Req() req: Request) {
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdateEmpresaDto,
+    @Req() req: Request,
+  ) {
     return this.empresasService.update(id, dto, req.user as any, req.ip);
   }
 

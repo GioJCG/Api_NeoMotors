@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditoriaService } from '../auditoria/auditoria.service';
 import { CreateSucursalDto } from './dto/create-sucursal.dto';
@@ -12,7 +17,9 @@ export class SucursalesService {
   ) {}
 
   private async ensureEmpresaExists(empresaId: string) {
-    const empresa = await this.prisma.empresa.findUnique({ where: { id: empresaId } });
+    const empresa = await this.prisma.empresa.findUnique({
+      where: { id: empresaId },
+    });
     if (!empresa) {
       throw new NotFoundException('Empresa no encontrada');
     }
@@ -30,9 +37,16 @@ export class SucursalesService {
     });
   }
 
-  async create(dto: CreateSucursalDto, empresaId: string, user: { id: string; roles: string[]; companyId?: string | null }, ip?: string) {
+  async create(
+    dto: CreateSucursalDto,
+    empresaId: string,
+    user: { id: string; roles: string[]; companyId?: string | null },
+    ip?: string,
+  ) {
     if (!user.roles.includes('SuperUsuario') && user.companyId !== empresaId) {
-      throw new ForbiddenException('No tiene permiso para crear sucursales en esta empresa');
+      throw new ForbiddenException(
+        'No tiene permiso para crear sucursales en esta empresa',
+      );
     }
 
     await this.ensureEmpresaExists(empresaId);
@@ -67,7 +81,10 @@ export class SucursalesService {
     return sucursal;
   }
 
-  async findAll(empresaId: string, user: { id: string; roles: string[]; companyId?: string | null }) {
+  async findAll(
+    empresaId: string,
+    user: { id: string; roles: string[]; companyId?: string | null },
+  ) {
     if (!user.roles.includes('SuperUsuario') && user.companyId !== empresaId) {
       throw new ForbiddenException('No tiene acceso a esta empresa');
     }
@@ -80,21 +97,32 @@ export class SucursalesService {
     });
   }
 
-  async findById(id: string, user: { id: string; roles: string[]; companyId?: string | null }) {
+  async findById(
+    id: string,
+    user: { id: string; roles: string[]; companyId?: string | null },
+  ) {
     const sucursal = await this.prisma.sucursal.findUnique({ where: { id } });
 
     if (!sucursal) {
       throw new NotFoundException('Sucursal no encontrada');
     }
 
-    if (!user.roles.includes('SuperUsuario') && user.companyId !== sucursal.empresaId) {
+    if (
+      !user.roles.includes('SuperUsuario') &&
+      user.companyId !== sucursal.empresaId
+    ) {
       throw new ForbiddenException('No tiene acceso a esta sucursal');
     }
 
     return sucursal;
   }
 
-  async update(id: string, dto: UpdateSucursalDto, user: { id: string; roles: string[]; companyId?: string | null }, ip?: string) {
+  async update(
+    id: string,
+    dto: UpdateSucursalDto,
+    user: { id: string; roles: string[]; companyId?: string | null },
+    ip?: string,
+  ) {
     const sucursal = await this.findById(id, user);
 
     if (dto.esMatriz) {
@@ -122,11 +150,17 @@ export class SucursalesService {
     return updated;
   }
 
-  async remove(id: string, user: { id: string; roles: string[]; companyId?: string | null }, ip?: string) {
+  async remove(
+    id: string,
+    user: { id: string; roles: string[]; companyId?: string | null },
+    ip?: string,
+  ) {
     const sucursal = await this.findById(id, user);
 
     if (sucursal.esMatriz) {
-      throw new BadRequestException('No se puede desactivar la sucursal matriz. Asigne otra como matriz primero.');
+      throw new BadRequestException(
+        'No se puede desactivar la sucursal matriz. Asigne otra como matriz primero.',
+      );
     }
 
     await this.prisma.sucursal.update({

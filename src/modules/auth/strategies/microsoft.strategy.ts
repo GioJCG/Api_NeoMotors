@@ -4,7 +4,10 @@ import { Strategy as BaseMicrosoftStrategy } from 'passport-microsoft';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
-export class MicrosoftStrategy extends PassportStrategy(BaseMicrosoftStrategy, 'microsoft') {
+export class MicrosoftStrategy extends PassportStrategy(
+  BaseMicrosoftStrategy,
+  'microsoft',
+) {
   constructor(configService: ConfigService) {
     super({
       clientID: configService.get<string>('MICROSOFT_CLIENT_ID') || '',
@@ -15,11 +18,18 @@ export class MicrosoftStrategy extends PassportStrategy(BaseMicrosoftStrategy, '
     });
   }
 
-  validate(accessToken: string, refreshToken: string, profile: any, done: (...args: any[]) => void): any {
+  validate(
+    accessToken: string,
+    refreshToken: string,
+    profile: any,
+    done: (...args: any[]) => void,
+  ): any {
     const { name, emails, displayName } = profile;
     const user = {
       email: emails?.[0]?.value || `${profile.id}@microsoft.local`,
-      nombre: name?.givenName ? `${name.givenName} ${name.familyName || ''}`.trim() : displayName || profile.id,
+      nombre: name?.givenName
+        ? `${name.givenName} ${name.familyName || ''}`.trim()
+        : displayName || profile.id,
       provider: 'microsoft',
       providerId: profile.id,
     };

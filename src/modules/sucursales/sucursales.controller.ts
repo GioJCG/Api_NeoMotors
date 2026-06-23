@@ -1,5 +1,22 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Req, Query, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  Req,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { SucursalesService } from './sucursales.service';
 import { CreateSucursalDto } from './dto/create-sucursal.dto';
 import { UpdateSucursalDto } from './dto/update-sucursal.dto';
@@ -23,7 +40,12 @@ export class SucursalesController {
     @Query('empresaId') empresaId: string,
     @Req() req: Request,
   ) {
-    return this.sucursalesService.create(dto, empresaId, req.user as any, req.ip);
+    return this.sucursalesService.create(
+      dto,
+      empresaId,
+      req.user as any,
+      req.ip,
+    );
   }
 
   @Get()
@@ -44,7 +66,11 @@ export class SucursalesController {
   @Put(':id')
   @Roles('SuperUsuario', 'AdministradorEmpresa', 'SupervisorSucursal')
   @ApiOperation({ summary: 'Actualizar sucursal' })
-  async update(@Param('id') id: string, @Body() dto: UpdateSucursalDto, @Req() req: Request) {
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdateSucursalDto,
+    @Req() req: Request,
+  ) {
     return this.sucursalesService.update(id, dto, req.user as any, req.ip);
   }
 

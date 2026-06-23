@@ -1,4 +1,12 @@
-import { Controller, Post, Body, Get, Req, Res, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
@@ -16,7 +24,11 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
-  @ApiOperation({ summary: 'Registro de usuario local', description: 'Crea una cuenta de usuario en estado PENDIENTE y envía un token de verificación.' })
+  @ApiOperation({
+    summary: 'Registro de usuario local',
+    description:
+      'Crea una cuenta de usuario en estado PENDIENTE y envía un token de verificación.',
+  })
   @ApiBody({ type: RegisterDto })
   @ApiResponse({ status: 201, description: 'Usuario registrado exitosamente.' })
   @ApiResponse({ status: 409, description: 'El email ya está registrado.' })
@@ -25,7 +37,11 @@ export class AuthController {
   }
 
   @Post('verify')
-  @ApiOperation({ summary: 'Verificación de cuenta', description: 'Valida el token de verificación y cambia el estado del usuario a ACTIVO.' })
+  @ApiOperation({
+    summary: 'Verificación de cuenta',
+    description:
+      'Valida el token de verificación y cambia el estado del usuario a ACTIVO.',
+  })
   @ApiBody({ type: VerifyDto })
   @ApiResponse({ status: 201, description: 'Cuenta verificada exitosamente.' })
   @ApiResponse({ status: 404, description: 'Token no encontrado.' })
@@ -36,17 +52,29 @@ export class AuthController {
 
   @Post('login')
   @UseGuards(IpThrottlerGuard)
-  @ApiOperation({ summary: 'Inicio de sesión', description: 'Autentica al usuario y retorna JWT + Refresh Token.' })
+  @ApiOperation({
+    summary: 'Inicio de sesión',
+    description: 'Autentica al usuario y retorna JWT + Refresh Token.',
+  })
   @ApiBody({ type: LoginDto })
-  @ApiResponse({ status: 201, description: 'Login exitoso. Retorna accessToken y refreshToken.' })
-  @ApiResponse({ status: 401, description: 'Credenciales inválidas o cuenta bloqueada.' })
+  @ApiResponse({
+    status: 201,
+    description: 'Login exitoso. Retorna accessToken y refreshToken.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Credenciales inválidas o cuenta bloqueada.',
+  })
   async login(@Body() dto: LoginDto, @Req() req: Request) {
     return this.authService.login(dto, req.ip);
   }
 
   @Post('forgot-password')
   @UseGuards(IpThrottlerGuard)
-  @ApiOperation({ summary: 'Solicitar recuperación de contraseña', description: 'Envía un token de recuperación al correo del usuario.' })
+  @ApiOperation({
+    summary: 'Solicitar recuperación de contraseña',
+    description: 'Envía un token de recuperación al correo del usuario.',
+  })
   @ApiBody({ type: ForgotPasswordDto })
   @ApiResponse({ status: 201, description: 'Token de recuperación generado.' })
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
@@ -54,9 +82,16 @@ export class AuthController {
   }
 
   @Post('reset-password')
-  @ApiOperation({ summary: 'Restablecer contraseña', description: 'Cambia la contraseña usando un token de recuperación válido. El token se invalida tras su uso.' })
+  @ApiOperation({
+    summary: 'Restablecer contraseña',
+    description:
+      'Cambia la contraseña usando un token de recuperación válido. El token se invalida tras su uso.',
+  })
   @ApiBody({ type: ResetPasswordDto })
-  @ApiResponse({ status: 201, description: 'Contraseña restablecida exitosamente.' })
+  @ApiResponse({
+    status: 201,
+    description: 'Contraseña restablecida exitosamente.',
+  })
   @ApiResponse({ status: 404, description: 'Token no encontrado.' })
   @ApiResponse({ status: 400, description: 'Token expirado o ya utilizado.' })
   async resetPassword(@Body() dto: ResetPasswordDto) {
@@ -102,7 +137,9 @@ export class AuthController {
   private async handleOAuthCallback(req: Request, res: Response) {
     const user = (req as any).user;
     if (!user) {
-      return res.redirect(`${this.getFrontendUrl()}/auth/login?error=oauth_failed`);
+      return res.redirect(
+        `${this.getFrontendUrl()}/auth/login?error=oauth_failed`,
+      );
     }
 
     try {
@@ -111,11 +148,16 @@ export class AuthController {
         `${this.getFrontendUrl()}/auth/login?accessToken=${result.accessToken}&refreshToken=${result.refreshToken}`,
       );
     } catch {
-      return res.redirect(`${this.getFrontendUrl()}/auth/login?error=oauth_error`);
+      return res.redirect(
+        `${this.getFrontendUrl()}/auth/login?error=oauth_error`,
+      );
     }
   }
 
   private getFrontendUrl(): string {
-    return this.authService['configService'].get<string>('FRONTEND_URL') || 'http://localhost:4200';
+    return (
+      this.authService['configService'].get<string>('FRONTEND_URL') ||
+      'http://localhost:4200'
+    );
   }
 }

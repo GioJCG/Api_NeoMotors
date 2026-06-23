@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
@@ -21,7 +25,9 @@ export class ContextService {
   }
 
   async getUserBranches(userId: string, empresaId: string) {
-    const empresa = await this.prisma.empresa.findUnique({ where: { id: empresaId } });
+    const empresa = await this.prisma.empresa.findUnique({
+      where: { id: empresaId },
+    });
     if (!empresa) {
       throw new NotFoundException('Empresa no encontrada');
     }
