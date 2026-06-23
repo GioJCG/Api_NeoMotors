@@ -1,4 +1,4 @@
-﻿-- CreateTable
+-- CreateTable
 CREATE TABLE "UsuarioEmpresa" (
     "id" TEXT NOT NULL,
     "usuario_id" TEXT NOT NULL,
