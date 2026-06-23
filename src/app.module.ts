@@ -22,6 +22,7 @@ import { InventariosModule } from './modules/inventarios/inventarios.module';
 import { CashDeskModule } from './modules/cash-desk/cash-desk.module';
 import { NotificacionesModule } from './modules/notificaciones/notificaciones.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { FiscalModule } from './modules/fiscal/fiscal.module';
 import { RolesGuard } from './modules/rbac/guards/roles.guard';
 
 @Module({
@@ -48,6 +49,7 @@ import { RolesGuard } from './modules/rbac/guards/roles.guard';
     CashDeskModule,
     NotificacionesModule,
     DashboardModule,
+    FiscalModule,
   ],
   providers: [
     {
