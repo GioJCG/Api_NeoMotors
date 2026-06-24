@@ -76,9 +76,11 @@ export class AuthService {
 
       this.logger.log(`[DEV MODE] User ${user.email} registered as AdministradorEmpresa.`);
 
+      const authTokens = await this.generateAuthTokens(user);
+
       return {
         message: 'Cuenta creada correctamente. Bienvenido a NeoMotors.',
-        requiresCompany: true,
+        ...authTokens,
       };
     }
 
