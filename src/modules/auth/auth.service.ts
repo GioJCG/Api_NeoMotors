@@ -47,6 +47,14 @@ export class AuthService {
 
     const passwordHash = await bcrypt.hash(dto.password, this.SALT_ROUNDS);
 
+    const adminRole = await this.prisma.rol.findUnique({
+      where: { nombre: 'AdministradorEmpresa' },
+    });
+
+    if (!adminRole) {
+      throw new Error('Rol AdministradorEmpresa no encontrado. Ejecute el seed primero.');
+    }
+
     const nodeEnv =
       this.configService.get<string>('NODE_ENV') || 'development';
 
@@ -57,14 +65,20 @@ export class AuthService {
           passwordHash,
           nombre: dto.nombre || null,
           estado: 'ACTIVO',
+          roles: {
+            create: {
+              rolId: adminRole.id,
+              companyId: null,
+            },
+          },
         },
       });
 
-      this.logger.log(`[DEV MODE] User ${user.email} auto-verified.`);
-      this.logger.log('[DEV MODE] Email verification skipped.');
+      this.logger.log(`[DEV MODE] User ${user.email} registered as AdministradorEmpresa.`);
 
       return {
         message: 'Cuenta creada correctamente. Bienvenido a NeoMotors.',
+        requiresCompany: true,
       };
     }
 
@@ -74,6 +88,12 @@ export class AuthService {
         passwordHash,
         nombre: dto.nombre || null,
         estado: 'PENDIENTE',
+        roles: {
+          create: {
+            rolId: adminRole.id,
+            companyId: null,
+          },
+        },
       },
     });
 
@@ -99,6 +119,7 @@ export class AuthService {
     return {
       message:
         'Cuenta creada correctamente. Verifica tu correo para activarla.',
+      requiresCompany: true,
     };
   }
 
@@ -257,6 +278,10 @@ export class AuthService {
       return this.generateAuthTokens(existingUser);
     }
 
+    const adminRole = await this.prisma.rol.findUnique({
+      where: { nombre: 'AdministradorEmpresa' },
+    });
+
     const newUser = await this.prisma.usuario.create({
       data: {
         email: oauthUser.email.toLowerCase(),
@@ -269,6 +294,16 @@ export class AuthService {
             providerId: oauthUser.providerId,
           },
         },
+        ...(adminRole
+          ? {
+              roles: {
+                create: {
+                  rolId: adminRole.id,
+                  companyId: null,
+                },
+              },
+            }
+          : {}),
       },
     });
 
@@ -383,10 +418,14 @@ export class AuthService {
     const accessToken = this.generateAccessToken(user, roles, permisos);
     const refreshToken = await this.generateRefreshToken(user);
 
+    const isAdminEmpresa = roles.includes('AdministradorEmpresa');
+    const requiresCompany = isAdminEmpresa && !user.companyId;
+
     return {
       accessToken,
       refreshToken: refreshToken.token,
       expiresIn: this.configService.get<string>('JWT_EXPIRATION'),
+      requiresCompany,
       user: {
         id: user.id,
         email: user.email,

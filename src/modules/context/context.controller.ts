@@ -34,7 +34,7 @@ export class ContextController {
   @ApiOperation({ summary: 'Obtener empresas disponibles del usuario' })
   async getCompanies(@Req() req: Request) {
     const user = req.user as any;
-    return this.contextService.getUserCompanies(user.id);
+    return this.contextService.getUserCompanies(user.id, user.roles);
   }
 
   @Get('branches')
@@ -50,13 +50,13 @@ export class ContextController {
   @ApiOperation({ summary: 'Cambiar empresa activa' })
   async setCompany(@Body() dto: SetCompanyContextDto, @Req() req: Request) {
     const user = req.user as any;
-    return this.contextService.setActiveCompany(user.id, dto.empresaId);
+    return this.contextService.setActiveCompany(user.id, dto.empresaId, user.roles);
   }
 
   @Put('branch')
   @ApiOperation({ summary: 'Cambiar sucursal activa' })
   async setBranch(@Body() dto: SetBranchContextDto, @Req() req: Request) {
     const user = req.user as any;
-    return this.contextService.setActiveBranch(user.id, dto.sucursalId);
+    return this.contextService.setActiveBranch(user.id, dto.sucursalId, user.roles);
   }
 }

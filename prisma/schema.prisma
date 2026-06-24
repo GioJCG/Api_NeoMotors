@@ -110,7 +110,7 @@ model Rol {
   id          String  @id @default(uuid()) @map("id")
   nombre      String  @unique @map("nombre")
   descripcion String? @map("descripcion")
-  esGlobal    Boolean @default(true) @map("es_global")
+  esGlobal    Boolean @default(false) @map("es_global")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -241,10 +241,11 @@ model Sucursal {
 }
 
 model UsuarioEmpresa {
-  id        String  @id @default(uuid()) @map("id")
-  usuarioId String  @map("usuario_id")
-  empresaId String  @map("empresa_id")
-  activa    Boolean @default(false) @map("activa")
+  id            String  @id @default(uuid()) @map("id")
+  usuarioId     String  @map("usuario_id")
+  empresaId     String  @map("empresa_id")
+  activa        Boolean @default(false) @map("activa")
+  esPropietario Boolean @default(false) @map("es_propietario")
 
   createdAt DateTime @default(now()) @map("created_at")
 

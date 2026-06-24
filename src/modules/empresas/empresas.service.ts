@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ForbiddenException,
   ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditoriaService } from '../auditoria/auditoria.service';
@@ -16,12 +17,25 @@ export class EmpresasService {
     private readonly auditoria: AuditoriaService,
   ) {}
 
-  async create(dto: CreateEmpresaDto, userId: string, ip?: string) {
+  async create(
+    dto: CreateEmpresaDto,
+    userId: string,
+    user: { id: string; roles: string[]; companyId?: string | null },
+    ip?: string,
+  ) {
     const existing = await this.prisma.empresa.findUnique({
       where: { rfc: dto.rfc },
     });
     if (existing) {
       throw new ConflictException('El RFC ya está registrado');
+    }
+
+    const isAdminEmpresa = user.roles.includes('AdministradorEmpresa');
+
+    if (isAdminEmpresa && user.companyId) {
+      throw new BadRequestException(
+        'El administrador ya tiene una empresa registrada. Solo puede tener una empresa.',
+      );
     }
 
     const empresa = await this.prisma.empresa.create({
@@ -39,6 +53,42 @@ export class EmpresasService {
       },
     });
 
+    await this.prisma.usuarioEmpresa.create({
+      data: {
+        usuarioId: userId,
+        empresaId: empresa.id,
+        activa: true,
+        esPropietario: true,
+      },
+    });
+
+    await this.prisma.usuario.update({
+      where: { id: userId },
+      data: { companyId: empresa.id },
+    });
+
+    const sucursal = await this.prisma.sucursal.create({
+      data: {
+        empresaId: empresa.id,
+        nombre: 'Matriz',
+        esMatriz: true,
+        createdBy: userId,
+      },
+    });
+
+    await this.prisma.usuarioSucursal.create({
+      data: {
+        usuarioId: userId,
+        sucursalId: sucursal.id,
+        activa: true,
+      },
+    });
+
+    await this.prisma.usuario.update({
+      where: { id: userId },
+      data: { branchId: sucursal.id },
+    });
+
     await this.auditoria.registrar({
       usuarioId: userId,
       accion: 'CREATE',
@@ -48,7 +98,11 @@ export class EmpresasService {
       ip,
     });
 
-    return empresa;
+    return {
+      ...empresa,
+      sucursalDefault: sucursal,
+      message: 'Empresa creada exitosamente. Bienvenido a NeoMotors.',
+    };
   }
 
   async findAll(user: {
@@ -63,9 +117,7 @@ export class EmpresasService {
     }
 
     if (!user.companyId) {
-      throw new ForbiddenException(
-        'El usuario no está asignado a ninguna empresa',
-      );
+      return [];
     }
 
     return this.prisma.empresa.findMany({

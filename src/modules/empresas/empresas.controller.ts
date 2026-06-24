@@ -30,13 +30,13 @@ export class EmpresasController {
   constructor(private readonly empresasService: EmpresasService) {}
 
   @Post()
-  @Roles('SuperUsuario')
-  @ApiOperation({ summary: 'Crear empresa (solo SuperUsuario)' })
+  @Roles('SuperUsuario', 'AdministradorEmpresa')
+  @ApiOperation({ summary: 'Crear empresa' })
   @ApiResponse({ status: 201, description: 'Empresa creada.' })
   @ApiResponse({ status: 409, description: 'RFC duplicado.' })
   async create(@Body() dto: CreateEmpresaDto, @Req() req: Request) {
     const user = req.user as any;
-    return this.empresasService.create(dto, user.id, req.ip);
+    return this.empresasService.create(dto, user.id, user, req.ip);
   }
 
   @Get()
