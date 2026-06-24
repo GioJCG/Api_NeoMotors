@@ -7,9 +7,25 @@ import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class ContextService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+  ) {}
 
-  async getUserCompanies(userId: string) {
+  async getUserCompanies(userId: string, userRoles?: string[]) {
+    const isSuper = userRoles?.includes('SuperUsuario');
+    if (isSuper) {
+      const empresas = await this.prisma.empresa.findMany({
+        orderBy: { nombre: 'asc' },
+        select: {
+          id: true,
+          nombre: true,
+          rfc: true,
+          estado: true,
+        },
+      });
+      return empresas.map((e) => ({ ...e, activa: false }));
+    }
+
     const asignaciones = await this.prisma.usuarioEmpresa.findMany({
       where: { usuarioId: userId },
       include: { empresa: true },
@@ -46,13 +62,17 @@ export class ContextService {
     }));
   }
 
-  async setActiveCompany(userId: string, empresaId: string) {
-    const asignacion = await this.prisma.usuarioEmpresa.findUnique({
-      where: { usuarioId_empresaId: { usuarioId: userId, empresaId } },
-    });
+  async setActiveCompany(userId: string, empresaId: string, userRoles?: string[]) {
+    const isSuper = userRoles?.includes('SuperUsuario');
 
-    if (!asignacion) {
-      throw new ForbiddenException('No tiene acceso a esta empresa');
+    if (!isSuper) {
+      const asignacion = await this.prisma.usuarioEmpresa.findUnique({
+        where: { usuarioId_empresaId: { usuarioId: userId, empresaId } },
+      });
+
+      if (!asignacion) {
+        throw new ForbiddenException('No tiene acceso a esta empresa');
+      }
     }
 
     await this.prisma.$transaction([
@@ -60,10 +80,14 @@ export class ContextService {
         where: { usuarioId: userId, activa: true },
         data: { activa: false },
       }),
-      this.prisma.usuarioEmpresa.update({
-        where: { id: asignacion.id },
-        data: { activa: true },
-      }),
+      ...(isSuper
+        ? []
+        : [
+            this.prisma.usuarioEmpresa.update({
+              where: { usuarioId_empresaId: { usuarioId: userId, empresaId } },
+              data: { activa: true },
+            }),
+          ]),
       this.prisma.usuario.update({
         where: { id: userId },
         data: { companyId: empresaId, branchId: null },
@@ -77,7 +101,28 @@ export class ContextService {
     return { message: 'Contexto de empresa actualizado' };
   }
 
-  async setActiveBranch(userId: string, sucursalId: string) {
+  async setActiveBranch(userId: string, sucursalId: string, userRoles?: string[]) {
+    const isSuper = userRoles?.includes('SuperUsuario');
+
+    if (isSuper) {
+      const sucursal = await this.prisma.sucursal.findUnique({
+        where: { id: sucursalId },
+      });
+      if (!sucursal) {
+        throw new NotFoundException('Sucursal no encontrada');
+      }
+
+      await this.prisma.usuario.update({
+        where: { id: userId },
+        data: {
+          companyId: sucursal.empresaId,
+          branchId: sucursalId,
+        },
+      });
+
+      return { message: 'Contexto de sucursal actualizado' };
+    }
+
     const asignacion = await this.prisma.usuarioSucursal.findUnique({
       where: { usuarioId_sucursalId: { usuarioId: userId, sucursalId } },
       include: { sucursal: true },

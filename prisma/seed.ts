@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -28,6 +29,7 @@ const ACCIONES = ['crear', 'leer', 'actualizar', 'eliminar', 'aprobar', 'autoriz
 interface RolDef {
   nombre: string;
   descripcion: string;
+  esGlobal: boolean;
   permisoFiltro: (modulo: string, accion: string) => boolean;
 }
 
@@ -35,11 +37,13 @@ const ROLES: RolDef[] = [
   {
     nombre: 'SuperUsuario',
     descripcion: 'Acceso total y global a todas las empresas, logs del sistema y catálogos maestros.',
+    esGlobal: true,
     permisoFiltro: () => true,
   },
   {
     nombre: 'AdministradorEmpresa',
     descripcion: 'Gestión total de los recursos, sucursales, facturación y usuarios de su empresa asignada.',
+    esGlobal: false,
     permisoFiltro: (modulo, accion) => {
       const prohibidos = ['superadmin'];
       if (prohibidos.includes(modulo)) return false;
@@ -49,6 +53,7 @@ const ROLES: RolDef[] = [
   {
     nombre: 'SupervisorSucursal',
     descripcion: 'Administra y supervisa la operación diaria de una o más sucursales asignadas.',
+    esGlobal: false,
     permisoFiltro: (modulo, accion) => {
       const soloLectura = ['empresas', 'reportes', 'auditoria', 'usuarios', 'roles', 'fiscal', 'proveedores'];
       if (soloLectura.includes(modulo) && accion !== 'leer') return false;
@@ -61,6 +66,7 @@ const ROLES: RolDef[] = [
   {
     nombre: 'Operador',
     descripcion: 'Captura información y opera exclusivamente los módulos asignados a su sucursal activa.',
+    esGlobal: false,
     permisoFiltro: (modulo, accion) => {
       const permitidos = ['dashboard', 'clientes', 'vehiculos', 'citas', 'ordenes', 'inventario', 'caja'];
       if (!permitidos.includes(modulo)) return false;
@@ -71,6 +77,7 @@ const ROLES: RolDef[] = [
   {
     nombre: 'Consulta',
     descripcion: 'Acceso de solo lectura para auditorías o reportería básica.',
+    esGlobal: false,
     permisoFiltro: (modulo, accion) => {
       if (accion !== 'leer') return false;
       if (modulo === 'superadmin') return false;
@@ -105,9 +112,9 @@ async function seedRbac() {
       create: {
         nombre: rolDef.nombre,
         descripcion: rolDef.descripcion,
-        esGlobal: true,
+        esGlobal: rolDef.esGlobal,
       },
-      update: {},
+      update: { esGlobal: rolDef.esGlobal },
     });
 
     const permisosAsignar = permisosCreados.filter((p) => {
@@ -139,6 +146,147 @@ async function seedRbac() {
     update: {},
   });
   console.log(`Empresa default: ${empresaDefault.id}`);
+
+  const sucursalDefault = await prisma.sucursal.upsert({
+    where: { id: '00000000-0000-0000-0000-000000000001' },
+    create: {
+      id: '00000000-0000-0000-0000-000000000001',
+      empresaId: empresaDefault.id,
+      nombre: 'Matriz neoMotors',
+      direccion: 'Av. Principal 123, Zapopan, Jalisco',
+      telefono: '3312345678',
+      esMatriz: true,
+      createdBy: 'seed',
+    },
+    update: {},
+  });
+  console.log(`Sucursal default: ${sucursalDefault.id}`);
+
+  const passwordHash = await bcrypt.hash('Test1234!', 10);
+
+  const testUsers = [
+    {
+      email: 'super@neomotors.dev',
+      nombre: 'Super Usuario',
+      roles: ['SuperUsuario'],
+    },
+    {
+      email: 'admin@neomotors.dev',
+      nombre: 'Admin Empresa',
+      roles: ['AdministradorEmpresa'],
+      esPropietario: true,
+    },
+    {
+      email: 'supervisor@neomotors.dev',
+      nombre: 'Supervisor Sucursal',
+      roles: ['SupervisorSucursal'],
+    },
+    {
+      email: 'operador@neomotors.dev',
+      nombre: 'Operador Taller',
+      roles: ['Operador'],
+    },
+    {
+      email: 'consulta@neomotors.dev',
+      nombre: 'Consulta',
+      roles: ['Consulta'],
+    },
+  ];
+
+  for (const tu of testUsers) {
+    const user = await prisma.usuario.upsert({
+      where: { email: tu.email },
+      create: {
+        email: tu.email,
+        passwordHash,
+        nombre: tu.nombre,
+        estado: 'ACTIVO',
+      },
+      update: {
+        nombre: tu.nombre,
+        estado: 'ACTIVO',
+        passwordHash,
+      },
+    });
+
+    const isSuperUsuario = tu.roles.includes('SuperUsuario');
+    const assignCompany = isSuperUsuario ? null : empresaDefault.id;
+    const assignBranch = isSuperUsuario ? null : sucursalDefault.id;
+
+    if (assignCompany) {
+      await prisma.usuario.update({
+        where: { id: user.id },
+        data: {
+          companyId: assignCompany,
+          branchId: assignBranch,
+        },
+      });
+    }
+
+    for (const rolName of tu.roles) {
+      const rol = await prisma.rol.findUnique({ where: { nombre: rolName } });
+      if (rol) {
+        const existing = await prisma.usuarioRol.findFirst({
+          where: {
+            usuarioId: user.id,
+            rolId: rol.id,
+            companyId: assignCompany,
+          },
+        });
+        if (!existing) {
+          await prisma.usuarioRol.create({
+            data: {
+              usuarioId: user.id,
+              rolId: rol.id,
+              companyId: assignCompany,
+            },
+          });
+        }
+      }
+    }
+
+    if (assignCompany) {
+      await prisma.usuarioEmpresa.upsert({
+        where: {
+          usuarioId_empresaId: {
+            usuarioId: user.id,
+            empresaId: assignCompany,
+          },
+        },
+        create: {
+          usuarioId: user.id,
+          empresaId: assignCompany,
+          activa: true,
+          esPropietario: tu.esPropietario ?? false,
+        },
+        update: {
+          activa: true,
+          esPropietario: tu.esPropietario ?? false,
+        },
+      });
+    }
+
+    if (assignBranch) {
+      await prisma.usuarioSucursal.upsert({
+        where: {
+          usuarioId_sucursalId: {
+            usuarioId: user.id,
+            sucursalId: assignBranch,
+          },
+        },
+        create: {
+          usuarioId: user.id,
+          sucursalId: assignBranch,
+          activa: true,
+        },
+        update: {
+          activa: true,
+        },
+      });
+    }
+
+    console.log(`Usuario test creado: ${tu.email} (${tu.roles.join(', ')})`);
+  }
 }
 
 function loadJson<T>(filename: string): T[] {
