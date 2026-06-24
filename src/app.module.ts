@@ -6,6 +6,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { RbacModule } from './modules/rbac/rbac.module';
 import { AuditoriaModule } from './modules/auditoria/auditoria.module';
+import { MailModule } from './modules/mail/mail.module';
 import { EmpresasModule } from './modules/empresas/empresas.module';
 import { SucursalesModule } from './modules/sucursales/sucursales.module';
 import { ContextModule } from './modules/context/context.module';
@@ -33,6 +34,7 @@ import { RolesGuard } from './modules/rbac/guards/roles.guard';
     EventEmitterModule.forRoot(),
     PrismaModule,
     AuthModule,
+    MailModule,
     RbacModule,
     AuditoriaModule,
     EmpresasModule,

@@ -4,9 +4,11 @@ import {
   BadRequestException,
   NotFoundException,
   UnauthorizedException,
+  Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { v4 as uuidv4 } from 'uuid';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -15,9 +17,11 @@ import { VerifyDto } from './dto/verify.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { UserRegisteredEvent, ForgotPasswordRequestedEvent } from '../mail/events/mail.events';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   private readonly SALT_ROUNDS = 12;
   private readonly TOKEN_EXPIRATION_HOURS = 24;
   private readonly MAX_LOGIN_ATTEMPTS = 5;
@@ -29,6 +33,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -41,6 +46,27 @@ export class AuthService {
     }
 
     const passwordHash = await bcrypt.hash(dto.password, this.SALT_ROUNDS);
+
+    const nodeEnv =
+      this.configService.get<string>('NODE_ENV') || 'development';
+
+    if (nodeEnv === 'development') {
+      const user = await this.prisma.usuario.create({
+        data: {
+          email: dto.email.toLowerCase(),
+          passwordHash,
+          nombre: dto.nombre || null,
+          estado: 'ACTIVO',
+        },
+      });
+
+      this.logger.log(`[DEV MODE] User ${user.email} auto-verified.`);
+      this.logger.log('[DEV MODE] Email verification skipped.');
+
+      return {
+        message: 'Cuenta creada correctamente. Bienvenido a NeoMotors.',
+      };
+    }
 
     const user = await this.prisma.usuario.create({
       data: {
@@ -65,11 +91,14 @@ export class AuthService {
       },
     });
 
+    this.eventEmitter.emit(
+      'user.registered',
+      new UserRegisteredEvent(user.email, verificationToken),
+    );
+
     return {
       message:
-        'Usuario registrado exitosamente. Se ha enviado un token de verificación.',
-      verificationToken,
-      expiresIn: `${this.TOKEN_EXPIRATION_HOURS} horas`,
+        'Cuenta creada correctamente. Verifica tu correo para activarla.',
     };
   }
 
@@ -270,11 +299,14 @@ export class AuthService {
       },
     });
 
+    this.eventEmitter.emit(
+      'forgot.password.requested',
+      new ForgotPasswordRequestedEvent(user.email, resetToken),
+    );
+
     return {
       message:
         'Si el correo está registrado, recibirá un enlace de recuperación.',
-      resetToken,
-      expiresIn: `${this.RESET_TOKEN_HOURS} hora`,
     };
   }
 
