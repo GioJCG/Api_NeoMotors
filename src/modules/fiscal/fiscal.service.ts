@@ -165,7 +165,8 @@ export class FiscalService {
   }
 
   private extractRfcFromCert(cert: forge.pki.Certificate): string | null {
-    // Try to find RFC in subject attributes (common name or serialNumber field)
+    console.log('CERT SUBJECT ATTRIBUTES');
+    console.log(JSON.stringify(cert.subject.attributes, null, 2));
     const attrs = cert.subject?.attributes || [];
     for (const attr of attrs) {
       if (attr.name === 'serialNumber' || attr.shortName === 'SN') {
