@@ -81,6 +81,38 @@ export class ContextService {
       }));
   }
 
+  async getCompanyById(empresaId: string, userId: string, userRoles?: string[]) {
+    const isSuper = userRoles?.includes('SuperUsuario');
+    if (!isSuper) {
+      const asignacion = await this.prisma.usuarioEmpresa.findUnique({
+        where: { usuarioId_empresaId: { usuarioId: userId, empresaId } },
+      });
+      if (!asignacion) {
+        throw new NotFoundException('Empresa no encontrada o sin acceso');
+      }
+    }
+
+    const empresa = await this.prisma.empresa.findUnique({
+      where: { id: empresaId },
+      select: {
+        id: true,
+        nombre: true,
+        rfc: true,
+        colorPrimario: true,
+        colorSecundario: true,
+        logoUrl: true,
+        tema: true,
+        estado: true,
+      },
+    });
+
+    if (!empresa) {
+      throw new NotFoundException('Empresa no encontrada');
+    }
+
+    return empresa;
+  }
+
   async setActiveCompany(userId: string, empresaId: string, userRoles?: string[]) {
     const isSuper = userRoles?.includes('SuperUsuario');
 

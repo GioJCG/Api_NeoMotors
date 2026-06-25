@@ -7,6 +7,7 @@ import {
   Query,
   Req,
   UseGuards,
+  NotFoundException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -29,6 +30,13 @@ import type { Request } from 'express';
 @Controller('context')
 export class ContextController {
   constructor(private readonly contextService: ContextService) {}
+
+  @Get('company/:id')
+  @ApiOperation({ summary: 'Obtener datos de empresa (incluye branding)' })
+  async getCompany(@Param('id') id: string, @Req() req: Request) {
+    const user = req.user as any;
+    return this.contextService.getCompanyById(id, user.id, user.roles);
+  }
 
   @Get('companies')
   @ApiOperation({ summary: 'Obtener empresas disponibles del usuario' })
