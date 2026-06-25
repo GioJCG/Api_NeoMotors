@@ -1,10 +1,14 @@
 import { Controller, Post, Get, Body, UseGuards, Req } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { Roles } from '../rbac/decorators/roles.decorator';
 import { FiscalService } from './fiscal.service';
 import { UploadCsdDto } from './dto/fiscal.dto';
 
-@Controller('fiscal')
-@UseGuards(AuthGuard('jwt'))
+@ApiTags('Fiscal')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
+@Roles('SuperUsuario', 'AdministradorEmpresa')
 export class FiscalController {
   constructor(private readonly service: FiscalService) {}
 

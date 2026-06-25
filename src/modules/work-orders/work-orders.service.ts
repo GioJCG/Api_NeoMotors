@@ -102,7 +102,10 @@ export class WorkOrdersService {
     };
   }
 
-  async findAll(user: { id: string; roles: string[]; companyId?: string | null }) {
+  async findAll(
+    user: { id: string; roles: string[]; companyId?: string | null },
+    sucursalId?: string,
+  ) {
     if (user.roles.includes('SuperUsuario')) {
       return this.prisma.ordenTrabajo.findMany({
         orderBy: { createdAt: 'desc' },
@@ -118,8 +121,13 @@ export class WorkOrdersService {
       throw new ForbiddenException('Debe tener una empresa activa');
     }
 
+    const where: any = { empresaId: user.companyId };
+    if (sucursalId) {
+      where.sucursalId = sucursalId;
+    }
+
     return this.prisma.ordenTrabajo.findMany({
-      where: { empresaId: user.companyId },
+      where,
       orderBy: { createdAt: 'desc' },
       include: {
         cliente: { select: { id: true, nombre: true } },

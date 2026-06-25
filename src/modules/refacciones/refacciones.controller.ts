@@ -32,14 +32,14 @@ export class RefaccionesController {
   }
 
   @Get()
-  @Roles('SuperUsuario', 'AdministradorEmpresa', 'SupervisorSucursal', 'Operador', 'Consulta')
+  @Roles('SuperUsuario', 'AdministradorEmpresa', 'SupervisorSucursal', 'Consulta')
   @ApiOperation({ summary: 'Listar refacciones' })
   findAll(@Req() req: Request) {
     return this.refaccionesService.findAll(req.user as any);
   }
 
   @Get(':id')
-  @Roles('SuperUsuario', 'AdministradorEmpresa', 'SupervisorSucursal', 'Operador', 'Consulta')
+  @Roles('SuperUsuario', 'AdministradorEmpresa', 'SupervisorSucursal', 'Consulta')
   @ApiOperation({ summary: 'Obtener refacción por ID' })
   findById(@Param('id') id: string, @Req() req: Request) {
     return this.refaccionesService.findById(id, req.user as any);

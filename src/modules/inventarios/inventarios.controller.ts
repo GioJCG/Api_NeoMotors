@@ -23,7 +23,7 @@ export class InventariosController {
   constructor(private readonly inventariosService: InventariosService) {}
 
   @Get()
-  @Roles('SuperUsuario', 'AdministradorEmpresa', 'SupervisorSucursal', 'Operador', 'Consulta')
+  @Roles('SuperUsuario', 'AdministradorEmpresa', 'SupervisorSucursal', 'Consulta')
   @ApiOperation({ summary: 'Ver inventario (por sucursal opcional)' })
   getStock(@Req() req: Request, @Query('sucursalId') sucursalId?: string) {
     return this.inventariosService.getStock(req.user as any, sucursalId);

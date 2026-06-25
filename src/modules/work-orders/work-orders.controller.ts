@@ -36,7 +36,9 @@ export class WorkOrdersController {
   @Roles('SuperUsuario', 'AdministradorEmpresa', 'SupervisorSucursal', 'Operador', 'Consulta')
   @ApiOperation({ summary: 'Listar órdenes de trabajo' })
   findAll(@Req() req: Request) {
-    return this.workOrdersService.findAll(req.user as any);
+    const user = req.user as any;
+    const sucursalId = user.roles?.includes('Operador') ? user.branchId : undefined;
+    return this.workOrdersService.findAll(user, sucursalId);
   }
 
   @Get(':id')

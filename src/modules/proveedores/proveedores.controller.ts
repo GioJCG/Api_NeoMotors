@@ -32,14 +32,14 @@ export class ProveedoresController {
   }
 
   @Get()
-  @Roles('SuperUsuario', 'AdministradorEmpresa', 'SupervisorSucursal', 'Operador', 'Consulta')
+  @Roles('SuperUsuario', 'AdministradorEmpresa', 'SupervisorSucursal', 'Consulta')
   @ApiOperation({ summary: 'Listar proveedores de la empresa activa' })
   findAll(@Req() req: Request) {
     return this.proveedoresService.findAll(req.user as any);
   }
 
   @Get(':id')
-  @Roles('SuperUsuario', 'AdministradorEmpresa', 'SupervisorSucursal', 'Operador', 'Consulta')
+  @Roles('SuperUsuario', 'AdministradorEmpresa', 'SupervisorSucursal', 'Consulta')
   @ApiOperation({ summary: 'Obtener proveedor por ID' })
   findById(@Param('id') id: string, @Req() req: Request) {
     return this.proveedoresService.findById(id, req.user as any);

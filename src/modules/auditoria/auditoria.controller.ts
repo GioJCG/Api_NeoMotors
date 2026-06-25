@@ -1,9 +1,13 @@
 import { Controller, Get, Query, UseGuards, Req } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { Roles } from '../rbac/decorators/roles.decorator';
 import { AuditoriaService } from './auditoria.service';
 
-@Controller('audit-logs')
-@UseGuards(AuthGuard('jwt'))
+@ApiTags('Auditoría')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
+@Roles('SuperUsuario', 'AdministradorEmpresa')
 export class AuditoriaController {
   constructor(private readonly service: AuditoriaService) {}
 
