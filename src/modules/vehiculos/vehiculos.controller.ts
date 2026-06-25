@@ -90,8 +90,4 @@ export class VehiculosController {
   private wrap<T>(data: T) {
     return { success: true, data, timestamp: new Date().toISOString() };
   }
-
-  private wrap<T>(data: T) {
-    return { success: true, data, timestamp: new Date().toISOString() };
-  }
 }

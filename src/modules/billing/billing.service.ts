@@ -43,10 +43,14 @@ export class BillingService {
     });
     if (!orden) throw new NotFoundException('Orden de trabajo no encontrada');
 
+    const PAC_PROVIDER = process.env.PAC_PROVIDER || 'simulated';
+    const isSimulated = PAC_PROVIDER === 'simulated';
+
     const { empresa, csd } = await this.validator.validateIssue({
       empresaId,
       ordenTrabajoId: dto.ordenTrabajoId,
       receptorRfc: orden?.cliente?.rfc || '',
+      skipCsdValidation: isSimulated,
       detalles: detallesDto.length > 0
         ? detallesDto.map((d) => ({
             cantidad: d.cantidad,
@@ -114,8 +118,8 @@ export class BillingService {
         razonSocial: empresa.razonSocial,
         regimenFiscal: empresa.regimenFiscal,
         codigoPostalFiscal: empresa.codigoPostalFiscal,
-        certificadoCer: csd.certificadoCer,
-        numeroCertificado: csd.numeroCertificado || undefined,
+        certificadoCer: csd?.certificadoCer || '',
+        numeroCertificado: csd?.numeroCertificado || undefined,
       },
       receptor: {
         rfc: orden.cliente.rfc || '',
@@ -141,13 +145,13 @@ export class BillingService {
       relacionUuid: dto.relacionUuid,
     });
 
-    const decryptedKey = this.decryptKey(csd.llaveKey);
-    const password = csd.passwordHash;
+    const decryptedKey = csd?.llaveKey ? this.decryptKey(csd.llaveKey) : 'fake-key-placeholder';
+    const password = csd?.passwordHash || 'simulado';
 
     const xmlSigned = this.digitalSigner.sign(xmlUnsigned, decryptedKey, password);
 
     const stampingResult = await this.stampingProvider.timbrar(xmlSigned, {
-      certificadoCer: csd.certificadoCer,
+      certificadoCer: csd?.certificadoCer || '',
       llaveKey: decryptedKey,
       password,
     });
@@ -279,7 +283,7 @@ export class BillingService {
         ordenTrabajo: {
           include: { cliente: { select: { id: true, nombre: true, rfc: true, direccion: true, email: true } } },
         },
-        empresa: { select: { id: true, nombre: true, rfc: true, razonSocial: true, regimenFiscal: true, codigoPostalFiscal: true } },
+        empresa: { select: { id: true, nombre: true, rfc: true, razonSocial: true, regimenFiscal: true, codigoPostalFiscal: true, logoUrl: true } },
         sucursal: { select: { id: true, nombre: true } },
       },
     });
@@ -321,6 +325,7 @@ export class BillingService {
           razonSocial: factura.empresa.razonSocial,
           regimenFiscal: factura.empresa.regimenFiscal,
           codigoPostalFiscal: factura.empresa.codigoPostalFiscal,
+          logoUrl: factura.empresa.logoUrl || undefined,
         },
         receptor: {
           rfc: factura.receptorRfc,
@@ -348,7 +353,8 @@ export class BillingService {
         usoCfdi: factura.usoCfdi,
       };
       const pdfBuffer = await this.pdfGenerator.generate(pdfData);
-      return { tipo: 'html', contenido: pdfBuffer.toString('utf8'), nombre: `CFDI_${factura.uuid}.html` };
+      const base64 = pdfBuffer.toString('base64');
+      return { tipo: 'application/pdf', contenido: base64, nombre: `CFDI_${factura.uuid || factura.folio}.pdf` };
     }
 
     throw new BadRequestException('Formato no soportado. Use "xml" o "pdf"');

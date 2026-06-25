@@ -16,6 +16,7 @@ import {
 } from '@nestjs/swagger';
 import { ContextService } from './context.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { Roles } from '../rbac/decorators/roles.decorator';
 import {
   SetCompanyContextDto,
   SetBranchContextDto,
@@ -31,6 +32,7 @@ export class ContextController {
   constructor(private readonly contextService: ContextService) {}
 
   @Get('companies')
+  @Roles('SuperUsuario', 'AdministradorEmpresa', 'SupervisorSucursal', 'Operador', 'Consulta')
   @ApiOperation({ summary: 'Obtener empresas disponibles del usuario' })
   async getCompanies(@Req() req: Request) {
     const user = req.user as any;
@@ -38,6 +40,7 @@ export class ContextController {
   }
 
   @Get('branches')
+  @Roles('SuperUsuario', 'AdministradorEmpresa', 'SupervisorSucursal', 'Operador', 'Consulta')
   @ApiOperation({
     summary: 'Obtener sucursales disponibles del usuario en una empresa',
   })
@@ -47,6 +50,7 @@ export class ContextController {
   }
 
   @Put('company')
+  @Roles('SuperUsuario', 'AdministradorEmpresa', 'SupervisorSucursal', 'Operador', 'Consulta')
   @ApiOperation({ summary: 'Cambiar empresa activa' })
   async setCompany(@Body() dto: SetCompanyContextDto, @Req() req: Request) {
     const user = req.user as any;
@@ -54,6 +58,7 @@ export class ContextController {
   }
 
   @Put('branch')
+  @Roles('SuperUsuario', 'AdministradorEmpresa', 'SupervisorSucursal', 'Operador', 'Consulta')
   @ApiOperation({ summary: 'Cambiar sucursal activa' })
   async setBranch(@Body() dto: SetBranchContextDto, @Req() req: Request) {
     const user = req.user as any;

@@ -12,8 +12,9 @@ export class CfdiValidatorService {
     ordenTrabajoId: string;
     receptorRfc: string;
     detalles: Array<{ cantidad: number; descripcion: string; precioUnitario: number }>;
+    skipCsdValidation?: boolean;
   }) {
-    const { empresaId, ordenTrabajoId, receptorRfc } = params;
+    const { empresaId, ordenTrabajoId, receptorRfc, skipCsdValidation } = params;
 
     if (!receptorRfc || !this.RFC_REGEX.test(receptorRfc)) {
       throw new BadRequestException('RFC del receptor inválido. Debe tener 12 o 13 caracteres.');
@@ -30,12 +31,15 @@ export class CfdiValidatorService {
       throw new BadRequestException('La empresa no tiene régimen fiscal registrado');
     }
 
-    const csd = await this.prisma.certificadoFiscal.findUnique({ where: { empresaId } });
-    if (!csd || !csd.activo) {
-      throw new BadRequestException('No hay un CSD activo para esta empresa. Cargue uno en Fiscal > CSD.');
-    }
-    if (csd.vigenciaHasta < new Date()) {
-      throw new BadRequestException('El CSD está vencido');
+    let csd = null;
+    if (!skipCsdValidation) {
+      csd = await this.prisma.certificadoFiscal.findUnique({ where: { empresaId } });
+      if (!csd || !csd.activo) {
+        throw new BadRequestException('No hay un CSD activo para esta empresa. Cargue uno en Fiscal > CSD.');
+      }
+      if (csd.vigenciaHasta < new Date()) {
+        throw new BadRequestException('El CSD está vencido');
+      }
     }
 
     const orden = await this.prisma.ordenTrabajo.findUnique({

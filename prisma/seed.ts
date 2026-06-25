@@ -164,7 +164,15 @@ async function seedRbac() {
 
   const passwordHash = await bcrypt.hash('Test1234!', 10);
 
+  const superAdminPassword = await bcrypt.hash('12345678', 10);
+
   const testUsers = [
+    {
+      email: 'admin@gmail.com',
+      nombre: 'SUPERADMIN',
+      roles: ['SuperUsuario'],
+      passwordOverride: superAdminPassword,
+    },
     {
       email: 'super@neomotors.dev',
       nombre: 'Super Usuario',
@@ -194,18 +202,19 @@ async function seedRbac() {
   ];
 
   for (const tu of testUsers) {
+    const finalHash = (tu as any).passwordOverride || passwordHash;
     const user = await prisma.usuario.upsert({
       where: { email: tu.email },
       create: {
         email: tu.email,
-        passwordHash,
+        passwordHash: finalHash,
         nombre: tu.nombre,
         estado: 'ACTIVO',
       },
       update: {
         nombre: tu.nombre,
         estado: 'ACTIVO',
-        passwordHash,
+        passwordHash: finalHash,
       },
     });
 
