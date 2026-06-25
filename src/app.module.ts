@@ -27,6 +27,7 @@ import { FiscalModule } from './modules/fiscal/fiscal.module';
 import { BillingModule } from './modules/billing/billing.module';
 import { SuperadminModule } from './modules/superadmin/superadmin.module';
 import { UsuariosModule } from './modules/usuarios/usuarios.module';
+import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './modules/rbac/guards/roles.guard';
 
 @Module({
@@ -60,6 +61,10 @@ import { RolesGuard } from './modules/rbac/guards/roles.guard';
     UsuariosModule,
   ],
   providers: [
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
     {
       provide: APP_GUARD,
       useClass: RolesGuard,
