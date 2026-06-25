@@ -14,12 +14,28 @@ export class MailService {
 
   constructor(private readonly configService: ConfigService) {
     const apiKey = this.configService.get<string>('RESEND_API_KEY');
-    this.resend = new Resend(apiKey);
     this.frontendUrl =
       this.configService.get<string>('FRONTEND_URL') || 'http://localhost:4200';
+
+    if (!apiKey) {
+      this.logger.warn(
+        'RESEND_API_KEY no configurada — los correos no se enviarán',
+      );
+      this.resend = null as unknown as Resend;
+      return;
+    }
+
+    this.resend = new Resend(apiKey);
   }
 
   async sendVerificationEmail(dto: SendVerificationEmailDto): Promise<void> {
+    if (!this.resend) {
+      this.logger.warn(
+        `[MOCK] Verification email to ${dto.to}: token=${dto.token}`,
+      );
+      return;
+    }
+
     const verificationLink = `${this.frontendUrl}/auth/verify?token=${dto.token}`;
     const html = buildVerificationEmailHtml(verificationLink);
     const from = this.getFromAddress();
@@ -41,6 +57,13 @@ export class MailService {
   }
 
   async sendPasswordResetEmail(dto: SendPasswordResetEmailDto): Promise<void> {
+    if (!this.resend) {
+      this.logger.warn(
+        `[MOCK] Password reset email to ${dto.to}: token=${dto.token}`,
+      );
+      return;
+    }
+
     const resetLink = `${this.frontendUrl}/auth/reset-password?token=${dto.token}`;
     const html = buildPasswordResetEmailHtml(resetLink);
     const from = this.getFromAddress();

@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
@@ -15,6 +15,8 @@ interface JwtPayload {
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
+  private readonly logger = new Logger(JwtStrategy.name);
+
   constructor(
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
@@ -27,6 +29,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: JwtPayload) {
+    this.logger.log(`[validate] JWT payload received: sub=${payload.sub}, email=${payload.email}, exp=${payload.exp}`);
+    this.logger.log(`[validate] Looking up user ${payload.sub} in DB...`);
+
     const user = await this.prisma.usuario.findUnique({
       where: { id: payload.sub },
       include: {
@@ -44,7 +49,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       },
     });
 
-    if (!user || user.estado !== 'ACTIVO') {
+    if (!user) {
+      this.logger.warn(`[validate] User ${payload.sub} NOT FOUND in database`);
+      throw new UnauthorizedException('Usuario no encontrado o inactivo');
+    }
+
+    if (user.estado !== 'ACTIVO') {
+      this.logger.warn(`[validate] User ${payload.sub} is estado=${user.estado}, not ACTIVO`);
       throw new UnauthorizedException('Usuario no encontrado o inactivo');
     }
 
@@ -55,6 +66,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         permisosSet.add(rp.permiso.nombre);
       }
     }
+
+    this.logger.log(`[validate] User ${user.id} ACCEPTED. roles=${JSON.stringify(roles)}, companyId=${user.companyId}`);
 
     return {
       id: user.id,

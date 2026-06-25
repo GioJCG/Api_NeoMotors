@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
+import { Public } from '../../common/decorators/public.decorator';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { VerifyDto } from './dto/verify.dto';
@@ -19,6 +20,7 @@ import { IpThrottlerGuard } from '../../common/guards/throttler.guard';
 import type { Request, Response } from 'express';
 
 @ApiTags('Auth')
+@Public()
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
