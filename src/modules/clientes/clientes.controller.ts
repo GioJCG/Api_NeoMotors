@@ -28,34 +28,43 @@ export class ClientesController {
   @Roles('SuperUsuario', 'AdministradorEmpresa', 'SupervisorSucursal', 'Operador')
   @ApiOperation({ summary: 'Crear cliente' })
   async create(@Body() dto: CreateClienteDto, @Req() req: Request) {
-    return this.clientesService.create(dto, req.user as any, req.ip);
+    const data = await this.clientesService.create(dto, req.user as any, req.ip);
+    return this.wrap(data);
   }
 
   @Get()
   @Roles('SuperUsuario', 'AdministradorEmpresa', 'SupervisorSucursal', 'Operador', 'Consulta')
   @ApiOperation({ summary: 'Listar clientes de la empresa activa' })
   async findAll(@Req() req: Request) {
-    return this.clientesService.findAll(req.user as any);
+    const data = await this.clientesService.findAll(req.user as any);
+    return this.wrap(data);
   }
 
   @Get(':id')
   @Roles('SuperUsuario', 'AdministradorEmpresa', 'SupervisorSucursal', 'Operador', 'Consulta')
   @ApiOperation({ summary: 'Obtener cliente por ID' })
   async findById(@Param('id') id: string, @Req() req: Request) {
-    return this.clientesService.findById(id, req.user as any);
+    const data = await this.clientesService.findById(id, req.user as any);
+    return this.wrap(data);
   }
 
   @Put(':id')
   @Roles('SuperUsuario', 'AdministradorEmpresa', 'SupervisorSucursal', 'Operador')
   @ApiOperation({ summary: 'Actualizar cliente' })
   async update(@Param('id') id: string, @Body() dto: UpdateClienteDto, @Req() req: Request) {
-    return this.clientesService.update(id, dto, req.user as any, req.ip);
+    const data = await this.clientesService.update(id, dto, req.user as any, req.ip);
+    return this.wrap(data);
   }
 
   @Delete(':id')
   @Roles('SuperUsuario', 'AdministradorEmpresa', 'SupervisorSucursal')
   @ApiOperation({ summary: 'Desactivar cliente (soft-delete)' })
   async remove(@Param('id') id: string, @Req() req: Request) {
-    return this.clientesService.remove(id, req.user as any, req.ip);
+    const data = await this.clientesService.remove(id, req.user as any, req.ip);
+    return this.wrap(data);
+  }
+
+  private wrap<T>(data: T) {
+    return { success: true, data, timestamp: new Date().toISOString() };
   }
 }
