@@ -290,7 +290,7 @@ async function seedRbac() {
 }
 
 function loadJson<T>(filename: string): T[] {
-  const filePath = path.join(__dirname, '..', 'sat-data', filename);
+  const filePath = path.join(__dirname, 'sat-data', filename);
   return JSON.parse(fs.readFileSync(filePath, 'utf-8')) as T[];
 }
 
@@ -352,10 +352,50 @@ async function seedSatCatalogs() {
   console.log('Catálogos SAT cargados exitosamente.');
 }
 
+const MARCAS_Y_MODELOS: Record<string, string[]> = {
+  Nissan: ['Versa', 'Sentra', 'March', 'Kicks', 'X-Trail', 'Frontier', 'NP300'],
+  Chevrolet: ['Aveo', 'Onix', 'Cavalier', 'Tracker', 'Groove', 'Silverado'],
+  Ford: ['Fiesta', 'Focus', 'Ranger', 'Explorer', 'Mustang', 'Escape'],
+  Volkswagen: ['Jetta', 'Golf', 'Tiguan', 'Polo', 'Vento', 'T-Cross'],
+  Toyota: ['Corolla', 'Hilux', 'RAV4', 'Yaris', 'Camry', 'Tacoma'],
+  Honda: ['Civic', 'CR-V', 'Fit', 'Accord', 'HR-V', 'Pilot'],
+  Mazda: ['Mazda 3', 'CX-5', 'CX-30', 'Mazda 6', 'MX-5', 'CX-9'],
+  Kia: ['Rio', 'Sportage', 'Forte', 'Seltos', 'Sorento', 'Stinger'],
+  Hyundai: ['Tucson', 'Elantra', 'Creta', 'Accent', 'Santa Fe', 'Sonata'],
+  BMW: ['Serie 3', 'Serie 5', 'X3', 'X5', 'Serie 1', 'X1'],
+  'Mercedes-Benz': ['Clase C', 'Clase E', 'Clase A', 'GLC', 'GLE', 'CLA'],
+  Audi: ['A3', 'A4', 'Q5', 'Q3', 'A5', 'Q7'],
+  Renault: ['Kwid', 'Duster', 'Sandero', 'Koleos', 'Logan', 'Captur'],
+  Peugeot: ['208', '2008', '3008', '308', '5008', 'Partner'],
+  Suzuki: ['Swift', 'Vitara', 'Ignis', 'S-Cross', 'Jimny', 'Ertiga'],
+  Mitsubishi: ['Mirage', 'L200', 'Outlander', 'Eclipse Cross', 'Montero', 'ASX'],
+};
+
+async function seedVehiculosCatalogs() {
+  for (const [marcaNombre, modelos] of Object.entries(MARCAS_Y_MODELOS)) {
+    const marca = await prisma.marca.upsert({
+      where: { nombre: marcaNombre },
+      create: { nombre: marcaNombre, createdBy: 'seed' },
+      update: {},
+    });
+    for (const modeloNombre of modelos) {
+      await prisma.modelo.upsert({
+        where: { marcaId_nombre: { marcaId: marca.id, nombre: modeloNombre } },
+        create: { marcaId: marca.id, nombre: modeloNombre, createdBy: 'seed' },
+        update: {},
+      });
+    }
+  }
+  const marcasCount = await prisma.marca.count();
+  const modelosCount = await prisma.modelo.count();
+  console.log(`Catálogo vehicular: ${marcasCount} marcas, ${modelosCount} modelos`);
+}
+
 async function main() {
   console.log('Iniciando seed...');
   await seedRbac();
   await seedSatCatalogs();
+  await seedVehiculosCatalogs();
   console.log('Seed completado exitosamente.');
 }
 
