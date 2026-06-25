@@ -8,13 +8,18 @@ import {
   Param,
   Req,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
   Logger,
+  BadRequestException,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
   ApiBearerAuth,
+  ApiConsumes,
 } from '@nestjs/swagger';
 import { EmpresasService } from './empresas.service';
 import { CreateEmpresaDto } from './dto/create-empresa.dto';
@@ -49,6 +54,30 @@ export class EmpresasController {
       this.logger.error(`[create] ERROR: ${error.message}`);
       throw error;
     }
+  }
+
+  @Post('logo')
+  @Roles('SuperUsuario', 'AdministradorEmpresa')
+  @ApiOperation({ summary: 'Subir logotipo de empresa' })
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(
+    FileInterceptor('logo', {
+      limits: { fileSize: 5 * 1024 * 1024 },
+      fileFilter: (_req, file, cb) => {
+        const allowed = ['image/png', 'image/jpeg', 'image/svg+xml', 'image/webp'];
+        if (allowed.includes(file.mimetype)) {
+          cb(null, true);
+        } else {
+          cb(new BadRequestException('Formato no permitido. Use PNG, JPG, SVG o WEBP.'), false);
+        }
+      },
+    }),
+  )
+  async uploadLogo(@UploadedFile() file: { buffer: Buffer; originalname: string; mimetype: string; size: number }) {
+    if (!file) {
+      throw new BadRequestException('Archivo no proporcionado');
+    }
+    return this.empresasService.saveLogo(file);
   }
 
   @Get()
