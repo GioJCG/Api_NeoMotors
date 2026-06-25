@@ -27,37 +27,42 @@ export class VehiculosController {
   @Post()
   @Roles('SuperUsuario', 'AdministradorEmpresa', 'SupervisorSucursal', 'Operador')
   @ApiOperation({ summary: 'Crear vehículo' })
-  create(@Body() dto: CreateVehiculoDto, @Req() req: Request) {
-    return this.vehiculosService.create(dto, req.user as any, req.ip);
+  async create(@Body() dto: CreateVehiculoDto, @Req() req: Request) {
+    const data = await this.vehiculosService.create(dto, req.user as any, req.ip);
+    return this.wrap(data);
   }
 
   @Get()
   @Roles('SuperUsuario', 'AdministradorEmpresa', 'SupervisorSucursal', 'Operador', 'Consulta')
   @ApiOperation({ summary: 'Listar vehículos' })
-  findAll(@Req() req: Request) {
-    return this.vehiculosService.findAll(req.user as any);
+  async findAll(@Req() req: Request) {
+    const data = await this.vehiculosService.findAll(req.user as any);
+    return this.wrap(data);
   }
 
   // Static catalog routes must come before :id routes
   @Get('catalog/marcas')
   @Roles('SuperUsuario', 'AdministradorEmpresa', 'SupervisorSucursal', 'Operador', 'Consulta')
   @ApiOperation({ summary: 'Listar marcas disponibles' })
-  findAllMarcas() {
-    return this.vehiculosService.findAllMarcas();
+  async findAllMarcas() {
+    const data = await this.vehiculosService.findAllMarcas();
+    return this.wrap(data);
   }
 
   @Get('catalog/marcas/:marcaId/modelos')
   @Roles('SuperUsuario', 'AdministradorEmpresa', 'SupervisorSucursal', 'Operador', 'Consulta')
   @ApiOperation({ summary: 'Listar modelos por marca' })
-  findModelosByMarca(@Param('marcaId') marcaId: string) {
-    return this.vehiculosService.findModelosByMarca(marcaId);
+  async findModelosByMarca(@Param('marcaId') marcaId: string) {
+    const data = await this.vehiculosService.findModelosByMarca(marcaId);
+    return this.wrap(data);
   }
 
   @Get(':id')
   @Roles('SuperUsuario', 'AdministradorEmpresa', 'SupervisorSucursal', 'Operador', 'Consulta')
   @ApiOperation({ summary: 'Obtener vehículo por ID' })
-  findById(@Param('id') id: string, @Req() req: Request) {
-    return this.vehiculosService.findById(id, req.user as any);
+  async findById(@Param('id') id: string, @Req() req: Request) {
+    const data = await this.vehiculosService.findById(id, req.user as any);
+    return this.wrap(data);
   }
 
   @Get(':id/history')
@@ -77,7 +82,12 @@ export class VehiculosController {
   @Delete(':id')
   @Roles('SuperUsuario', 'AdministradorEmpresa', 'SupervisorSucursal')
   @ApiOperation({ summary: 'Desactivar vehículo' })
-  remove(@Param('id') id: string, @Req() req: Request) {
-    return this.vehiculosService.remove(id, req.user as any, req.ip);
+  async remove(@Param('id') id: string, @Req() req: Request) {
+    const data = await this.vehiculosService.remove(id, req.user as any, req.ip);
+    return this.wrap(data);
+  }
+
+  private wrap<T>(data: T) {
+    return { success: true, data, timestamp: new Date().toISOString() };
   }
 }
