@@ -290,7 +290,7 @@ async function seedRbac() {
 }
 
 function loadJson<T>(filename: string): T[] {
-  const filePath = path.join(__dirname, '..', 'sat-data', filename);
+  const filePath = path.join(__dirname, 'sat-data', filename);
   return JSON.parse(fs.readFileSync(filePath, 'utf-8')) as T[];
 }
 

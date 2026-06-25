@@ -4,6 +4,7 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { Roles } from '../rbac/decorators/roles.decorator';
 import { AuditoriaService } from './auditoria.service';
 
+@Controller('auditoria')
 @ApiTags('Auditoría')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)

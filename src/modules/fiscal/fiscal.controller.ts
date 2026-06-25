@@ -5,6 +5,7 @@ import { Roles } from '../rbac/decorators/roles.decorator';
 import { FiscalService } from './fiscal.service';
 import { UploadCsdDto } from './dto/fiscal.dto';
 
+@Controller('fiscal')
 @ApiTags('Fiscal')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
