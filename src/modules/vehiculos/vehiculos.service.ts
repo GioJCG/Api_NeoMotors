@@ -173,12 +173,15 @@ export class VehiculosService {
   }
 
   async findAllMarcas() {
-    return this.prisma.marca.findMany({ orderBy: { nombre: 'asc' } });
+    return this.prisma.marca.findMany({
+      where: { estado: 'ACTIVA' },
+      orderBy: { nombre: 'asc' },
+    });
   }
 
   async findModelosByMarca(marcaId: string) {
     return this.prisma.modelo.findMany({
-      where: { marcaId },
+      where: { marcaId, estado: 'ACTIVA' },
       orderBy: { nombre: 'asc' },
     });
   }

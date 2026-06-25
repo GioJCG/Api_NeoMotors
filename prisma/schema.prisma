@@ -289,6 +289,7 @@ model Auditoria {
 model Marca {
   id        String   @id @default(uuid()) @map("id")
   nombre    String   @unique @map("nombre")
+  estado    String   @default("ACTIVA") @map("estado")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -304,6 +305,7 @@ model Modelo {
   id      String @id @default(uuid()) @map("id")
   marcaId String @map("marca_id")
   nombre  String @map("nombre")
+  estado  String @default("ACTIVA") @map("estado")
 
   createdAt DateTime @default(now()) @map("created_at")
   createdBy String? @map("created_by")

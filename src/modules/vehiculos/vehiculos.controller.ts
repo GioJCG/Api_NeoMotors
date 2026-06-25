@@ -5,11 +5,12 @@ import {
   Put,
   Delete,
   Param,
+  Query,
   Body,
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { VehiculosService } from './vehiculos.service';
 import { CreateVehiculoDto } from './dto/create-vehiculo.dto';
 import { UpdateVehiculoDto } from './dto/update-vehiculo.dto';
@@ -36,6 +37,22 @@ export class VehiculosController {
   @ApiOperation({ summary: 'Listar vehículos' })
   findAll(@Req() req: Request) {
     return this.vehiculosService.findAll(req.user as any);
+  }
+
+  // Brand and model catalog endpoints (aliases for discoverability)
+  @Get('catalog/brands')
+  @Roles('SuperUsuario', 'AdministradorEmpresa', 'SupervisorSucursal', 'Operador', 'Consulta')
+  @ApiOperation({ summary: 'Listar marcas activas (alias)' })
+  findAllBrands() {
+    return this.vehiculosService.findAllMarcas();
+  }
+
+  @Get('catalog/models')
+  @Roles('SuperUsuario', 'AdministradorEmpresa', 'SupervisorSucursal', 'Operador', 'Consulta')
+  @ApiOperation({ summary: 'Listar modelos activos por marca (alias)' })
+  @ApiQuery({ name: 'brandId', required: true })
+  findModelsByBrand(@Query('brandId') brandId: string) {
+    return this.vehiculosService.findModelosByMarca(brandId);
   }
 
   // Static catalog routes must come before :id routes
