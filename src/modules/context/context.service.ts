@@ -59,6 +59,7 @@ export class ContextService {
         id: s.id,
         nombre: s.nombre,
         esMatriz: s.esMatriz,
+        estado: s.estado,
         activa: s.estado === 'ACTIVA',
       }));
     }
@@ -75,6 +76,7 @@ export class ContextService {
         id: a.sucursal.id,
         nombre: a.sucursal.nombre,
         esMatriz: a.sucursal.esMatriz,
+        estado: a.sucursal.estado,
         activa: a.activa,
       }));
   }
