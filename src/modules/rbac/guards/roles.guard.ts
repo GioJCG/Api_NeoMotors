@@ -3,6 +3,7 @@ import {
   CanActivate,
   ExecutionContext,
   ForbiddenException,
+  Logger,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from '../decorators/roles.decorator';
@@ -11,12 +12,18 @@ import { PrismaService } from '../../../prisma/prisma.service';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
+  private readonly logger = new Logger(RolesGuard.name);
+
   constructor(
     private readonly reflector: Reflector,
     private readonly prisma: PrismaService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    const handlerName = context.getHandler().name;
+    const className = context.getClass().name;
+    const req = context.switchToHttp().getRequest();
+
     const requiredRoles = this.reflector.getAllAndOverride<string[]>(
       ROLES_KEY,
       [context.getHandler(), context.getClass()],
@@ -27,13 +34,18 @@ export class RolesGuard implements CanActivate {
       [context.getHandler(), context.getClass()],
     );
 
+    this.logger.log(`[canActivate] ${className}.${handlerName} requiredRoles=${JSON.stringify(requiredRoles)}, requiredPermiso=${requiredPermiso}`);
+
     if (!requiredRoles && !requiredPermiso) {
+      this.logger.log(`[canActivate] No roles/permisos required - ALLOW`);
       return true;
     }
 
-    const { user } = context.switchToHttp().getRequest();
+    const { user } = req;
+    this.logger.log(`[canActivate] user present: ${!!user}, user.id: ${user?.id || 'N/A'}, user.roles: ${JSON.stringify(user?.roles)}`);
 
     if (!user) {
+      this.logger.warn(`[canActivate] BLOCKED: user is null/undefined`);
       throw new ForbiddenException('Acceso denegado: usuario no autenticado');
     }
 

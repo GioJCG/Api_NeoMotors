@@ -415,16 +415,20 @@ export class AuthService {
     }
     const permisos = Array.from(permisosSet);
 
+    this.logger.log(`[generateAuthTokens] user.id=${user.id}, roles=${JSON.stringify(roles)}, companyId=${user.companyId}`);
+
     const accessToken = this.generateAccessToken(user, roles, permisos);
     const refreshToken = await this.generateRefreshToken(user);
 
     const isAdminEmpresa = roles.includes('AdministradorEmpresa');
     const requiresCompany = isAdminEmpresa && !user.companyId;
 
+    this.logger.log(`[generateAuthTokens] Token generated for ${user.email}. requiresCompany=${requiresCompany}`);
+
     return {
       accessToken,
       refreshToken: refreshToken.token,
-      expiresIn: this.configService.get<string>('JWT_EXPIRATION'),
+      expiresIn: this.configService.get<string>('JWT_EXPIRATION') || '24h',
       requiresCompany,
       user: {
         id: user.id,
@@ -451,7 +455,10 @@ export class AuthService {
       roles,
       permisos,
     };
-    return this.jwtService.sign(payload);
+    this.logger.log(`[generateAccessToken] payload keys: ${Object.keys(payload).join(',')}, payload size: ~${JSON.stringify(payload).length} chars`);
+    const token = this.jwtService.sign(payload);
+    this.logger.log(`[generateAccessToken] token length: ${token.length} chars`);
+    return token;
   }
 
   private async generateRefreshToken(user: any) {

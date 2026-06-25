@@ -8,6 +8,7 @@ import {
   Param,
   Req,
   UseGuards,
+  Logger,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -27,6 +28,8 @@ import type { Request } from 'express';
 @UseGuards(JwtAuthGuard)
 @Controller('companies')
 export class EmpresasController {
+  private readonly logger = new Logger(EmpresasController.name);
+
   constructor(private readonly empresasService: EmpresasService) {}
 
   @Post()
@@ -36,7 +39,16 @@ export class EmpresasController {
   @ApiResponse({ status: 409, description: 'RFC duplicado.' })
   async create(@Body() dto: CreateEmpresaDto, @Req() req: Request) {
     const user = req.user as any;
-    return this.empresasService.create(dto, user.id, user, req.ip);
+    this.logger.log(`[create] REACHED CONTROLLER. user.id=${user?.id}, dto.nombre=${dto?.nombre}`);
+    this.logger.log(`[create] req.headers.authorization present: ${!!req.headers?.authorization}`);
+    try {
+      const result = await this.empresasService.create(dto, user.id, user, req.ip);
+      this.logger.log(`[create] SUCCESS. empresa.id=${result?.id || 'unknown'}`);
+      return result;
+    } catch (error) {
+      this.logger.error(`[create] ERROR: ${error.message}`);
+      throw error;
+    }
   }
 
   @Get()
