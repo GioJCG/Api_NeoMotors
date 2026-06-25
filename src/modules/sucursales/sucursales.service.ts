@@ -84,6 +84,7 @@ export class SucursalesService {
   async findAll(
     empresaId: string,
     user: { id: string; roles: string[]; companyId?: string | null },
+    estado?: string,
   ) {
     if (!user.roles.includes('SuperUsuario') && user.companyId !== empresaId) {
       throw new ForbiddenException('No tiene acceso a esta empresa');
@@ -91,8 +92,13 @@ export class SucursalesService {
 
     await this.ensureEmpresaExists(empresaId);
 
+    const where: any = { empresaId };
+    if (estado) {
+      where.estado = estado;
+    }
+
     return this.prisma.sucursal.findMany({
-      where: { empresaId },
+      where,
       orderBy: [{ esMatriz: 'desc' }, { nombre: 'asc' }],
     });
   }

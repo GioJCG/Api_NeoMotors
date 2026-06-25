@@ -52,8 +52,13 @@ export class SucursalesController {
   @Roles('SuperUsuario', 'AdministradorEmpresa', 'SupervisorSucursal')
   @ApiOperation({ summary: 'Listar sucursales de una empresa' })
   @ApiQuery({ name: 'empresaId', required: true })
-  async findAll(@Query('empresaId') empresaId: string, @Req() req: Request) {
-    return this.sucursalesService.findAll(empresaId, req.user as any);
+  @ApiQuery({ name: 'estado', required: false })
+  async findAll(
+    @Query('empresaId') empresaId: string,
+    @Query('estado') estado: string | undefined,
+    @Req() req: Request,
+  ) {
+    return this.sucursalesService.findAll(empresaId, req.user as any, estado);
   }
 
   @Get(':id')
