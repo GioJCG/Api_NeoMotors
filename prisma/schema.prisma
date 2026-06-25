@@ -235,6 +235,7 @@ model Sucursal {
   movimientosInv    MovimientoInventario[]
   cajas             Caja[]
   pagos             Pago[]
+  facturasFiscales  FacturaFiscal[]
   notificaciones    NotificacionTaller[]
 
   @@map("Sucursal")
@@ -487,6 +488,52 @@ model SatUsoCfdi {
   @@index([nombre])
   @@index([tipo])
   @@map("SatUsoCfdi")
+}
+
+model SatFormaPago {
+  id          String  @id @default(uuid()) @map("id")
+  codigo      String  @unique @map("codigo")
+  nombre      String  @map("nombre")
+  bancarizado Boolean @default(false) @map("bancarizado")
+
+  @@index([nombre])
+  @@map("SatFormaPago")
+}
+
+model SatMetodoPago {
+  id     String @id @default(uuid()) @map("id")
+  codigo String @unique @map("codigo")
+  nombre String @map("nombre")
+
+  @@index([nombre])
+  @@map("SatMetodoPago")
+}
+
+model SatObjetoImp {
+  id     String @id @default(uuid()) @map("id")
+  codigo String @unique @map("codigo")
+  nombre String @map("nombre")
+
+  @@index([nombre])
+  @@map("SatObjetoImp")
+}
+
+model SatTipoRelacion {
+  id     String @id @default(uuid()) @map("id")
+  codigo String @unique @map("codigo")
+  nombre String @map("nombre")
+
+  @@index([nombre])
+  @@map("SatTipoRelacion")
+}
+
+model SatTipoComprobante {
+  id     String @id @default(uuid()) @map("id")
+  codigo String @unique @map("codigo")
+  nombre String @map("nombre")
+
+  @@index([nombre])
+  @@map("SatTipoComprobante")
 }
 
 model Cita {
@@ -989,11 +1036,19 @@ model FacturaFiscal {
   id              String        @id @default(uuid()) @map("id")
   empresaId       String        @map("empresa_id")
   ordenTrabajoId  String        @map("orden_trabajo_id")
-  folio           String        @map("folio") // Serie + Folio, ej. F1001
-  uuid            String?       @unique @map("uuid") // UUID del timbrado
+  sucursalId      String?       @map("sucursal_id")
+  folio           String        @map("folio")
+  serie           String?       @map("serie")
+  uuid            String?       @unique @map("uuid")
   estado          FacturaStatus @default(GENERADA) @map("estado")
-  xmlTimbrado     String?       @map("xml_timbrado") // XML timbrado final
+  xmlTimbrado     String?       @map("xml_timbrado")
   fechaTimbrado   DateTime?     @map("fecha_timbrado")
+
+  // CFDI 4.0 metadata
+  tipoComprobante String  @default("I") @map("tipo_comprobante") // I=Ingreso, E=Egreso, T=Traslado, P=Pago, N=Nómina
+  lugarExpedicion String  @map("lugar_expedicion")
+  exportacion     String  @default("01") @map("exportacion") // 01=No, 02=Definitiva, 03=Temporal
+  objetoImp       String  @default("02") @map("objeto_imp") // 01=No objeto, 02=Sí objeto, 03=Sí objeto IVA
 
   // Receptor
   receptorRfc     String  @map("receptor_rfc")
@@ -1005,14 +1060,30 @@ model FacturaFiscal {
   descuento       Decimal @default(0) @map("descuento")
   iva             Decimal @default(0) @map("iva")
   total           Decimal @default(0) @map("total")
-  metodoPago      String  @default("PUE") @map("metodo_pago") // PUE, PPD
-  formaPago       String  @default("01") @map("forma_pago") // 01=Efectivo, 03=Transferencia, 04=Tarjeta, etc.
+  metodoPago      String  @default("PUE") @map("metodo_pago")
+  formaPago       String  @default("01") @map("forma_pago")
   usoCfdi         String  @default("G03") @map("uso_cfdi")
+
+  // Relaciones CFDI
+  relacionTipo    String?  @map("relacion_tipo")  // 01=NC, 02=ND, 03=Devolución, 04=Sustitución
+  relacionUuid    String?  @map("relacion_uuid")
+
+  // Cancelación
+  motivoCancelacion    String?   @map("motivo_cancelacion")
+  uuidSustituto        String?   @map("uuid_sustituto")
+  fechaCancelacion     DateTime? @map("fecha_cancelacion")
+  acuseCancelacion     String?   @map("acuse_cancelacion")
+
+  // Complemento de Pago (para PPD)
+  esPago           Boolean @default(false) @map("es_pago")
+  pagoTipoCambio   Decimal? @map("pago_tipo_cambio")
+  pagoMonto        Decimal? @map("pago_monto")
 
   createdAt DateTime @default(now()) @map("created_at")
   createdBy String?  @map("created_by")
 
   empresa      Empresa             @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  sucursal     Sucursal?           @relation(fields: [sucursalId], references: [id])
   ordenTrabajo OrdenTrabajo        @relation(fields: [ordenTrabajoId], references: [id])
   detalles     FacturaFiscalDetalle[]
 
@@ -1027,14 +1098,17 @@ model FacturaFiscalDetalle {
   id            String  @id @default(uuid()) @map("id")
   facturaId     String  @map("factura_id")
   cantidad      Decimal @default(1) @map("cantidad")
-  claveProdServ String  @default("78111805") @map("clave_prod_serv") // SAT product/service code
-  claveUnidad   String  @default("E48") @map("clave_unidad") // SAT unit code
+  claveProdServ String  @default("78111805") @map("clave_prod_serv")
+  claveUnidad   String  @default("E48") @map("clave_unidad")
   unidad        String  @default("Servicio") @map("unidad")
+  noIdentificacion String? @map("no_identificacion")
   descripcion   String  @map("descripcion")
   precioUnitario Decimal @map("precio_unitario")
   importe       Decimal @map("importe")
   descuento     Decimal @default(0) @map("descuento")
   iva           Decimal @default(0) @map("iva")
+  objetoImp     String  @default("02") @map("objeto_imp")
+
   total         Decimal @default(0) @map("total")
 
   factura FacturaFiscal @relation(fields: [facturaId], references: [id], onDelete: Cascade)
