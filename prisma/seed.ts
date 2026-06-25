@@ -290,7 +290,7 @@ async function seedRbac() {
 }
 
 function loadJson<T>(filename: string): T[] {
-  const filePath = path.join(__dirname, '..', 'sat-data', filename);
+  const filePath = path.join(__dirname, 'sat-data', filename);
   return JSON.parse(fs.readFileSync(filePath, 'utf-8')) as T[];
 }
 
@@ -348,6 +348,100 @@ async function seedSatCatalogs() {
     });
   }
   console.log(`SatUsoCfdi: ${usosCfdi.length} registros`);
+
+  const formasPago = [
+    { codigo: '01', nombre: 'Efectivo', bancarizado: false },
+    { codigo: '02', nombre: 'Cheque nominativo', bancarizado: true },
+    { codigo: '03', nombre: 'Transferencia electrónica de fondos', bancarizado: true },
+    { codigo: '04', nombre: 'Tarjeta de crédito', bancarizado: true },
+    { codigo: '05', nombre: 'Monedero electrónico', bancarizado: true },
+    { codigo: '06', nombre: 'Dinero electrónico', bancarizado: true },
+    { codigo: '08', nombre: 'Vales de despensa', bancarizado: false },
+    { codigo: '12', nombre: 'Dación en pago', bancarizado: false },
+    { codigo: '13', nombre: 'Pago por subrogación', bancarizado: false },
+    { codigo: '14', nombre: 'Pago por consignación', bancarizado: false },
+    { codigo: '15', nombre: 'Condonación', bancarizado: false },
+    { codigo: '17', nombre: 'Compensación', bancarizado: false },
+    { codigo: '23', nombre: 'Novación', bancarizado: false },
+    { codigo: '24', nombre: 'Confusión', bancarizado: false },
+    { codigo: '25', nombre: 'Remisión de deuda', bancarizado: false },
+    { codigo: '26', nombre: 'Prescripción o caducidad', bancarizado: false },
+    { codigo: '27', nombre: 'A satisfacción del acreedor', bancarizado: false },
+    { codigo: '28', nombre: 'Tarjeta de débito', bancarizado: true },
+    { codigo: '29', nombre: 'Tarjeta de servicios', bancarizado: true },
+    { codigo: '30', nombre: 'Aplicación de anticipos', bancarizado: false },
+    { codigo: '31', nombre: 'Intermediario pagos', bancarizado: true },
+    { codigo: '99', nombre: 'Por definir', bancarizado: false },
+  ];
+  for (const fp of formasPago) {
+    await prisma.satFormaPago.upsert({
+      where: { codigo: fp.codigo },
+      create: fp,
+      update: {},
+    });
+  }
+  console.log(`SatFormaPago: ${formasPago.length} registros`);
+
+  const metodosPago = [
+    { codigo: 'PUE', nombre: 'Pago en una sola exhibición' },
+    { codigo: 'PPD', nombre: 'Pago en parcialidades o diferido' },
+  ];
+  for (const mp of metodosPago) {
+    await prisma.satMetodoPago.upsert({
+      where: { codigo: mp.codigo },
+      create: mp,
+      update: {},
+    });
+  }
+  console.log(`SatMetodoPago: ${metodosPago.length} registros`);
+
+  const objetosImp = [
+    { codigo: '01', nombre: 'No objeto de impuesto' },
+    { codigo: '02', nombre: 'Sí objeto de impuesto' },
+    { codigo: '03', nombre: 'Sí objeto de impuesto y no obligado al desglose' },
+  ];
+  for (const oi of objetosImp) {
+    await prisma.satObjetoImp.upsert({
+      where: { codigo: oi.codigo },
+      create: oi,
+      update: {},
+    });
+  }
+  console.log(`SatObjetoImp: ${objetosImp.length} registros`);
+
+  const tiposRelacion = [
+    { codigo: '01', nombre: 'Nota de crédito de los documentos relacionados' },
+    { codigo: '02', nombre: 'Nota de débito de los documentos relacionados' },
+    { codigo: '03', nombre: 'Devolución de mercancía sobre facturas o traslados' },
+    { codigo: '04', nombre: 'Sustitución de los CFDI previos' },
+    { codigo: '05', nombre: 'Traslados de mercancías facturados previamente' },
+    { codigo: '06', nombre: 'Factura generada por los traslados previos' },
+    { codigo: '07', nombre: 'CFDI por aplicación de anticipo' },
+  ];
+  for (const tr of tiposRelacion) {
+    await prisma.satTipoRelacion.upsert({
+      where: { codigo: tr.codigo },
+      create: tr,
+      update: {},
+    });
+  }
+  console.log(`SatTipoRelacion: ${tiposRelacion.length} registros`);
+
+  const tiposComprobante = [
+    { codigo: 'I', nombre: 'Ingreso' },
+    { codigo: 'E', nombre: 'Egreso' },
+    { codigo: 'T', nombre: 'Traslado' },
+    { codigo: 'P', nombre: 'Pago' },
+    { codigo: 'N', nombre: 'Nómina' },
+  ];
+  for (const tc of tiposComprobante) {
+    await prisma.satTipoComprobante.upsert({
+      where: { codigo: tc.codigo },
+      create: tc,
+      update: {},
+    });
+  }
+  console.log(`SatTipoComprobante: ${tiposComprobante.length} registros`);
 
   console.log('Catálogos SAT cargados exitosamente.');
 }
