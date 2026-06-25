@@ -25,6 +25,7 @@ export class VehiculosService {
 
     await this.ensureUniquePlate(empresaId, dto.placa);
     await this.ensureClienteBelongsToEmpresa(dto.clienteId, empresaId);
+    await this.ensureModeloBelongsToMarca(dto.marcaId, dto.modeloId);
 
     const vehiculo = await this.prisma.vehiculo.create({
       data: {
@@ -195,6 +196,13 @@ export class VehiculosService {
     const cliente = await this.prisma.cliente.findUnique({ where: { id: clienteId } });
     if (!cliente || cliente.empresaId !== empresaId) {
       throw new ConflictException('El cliente no pertenece a la empresa activa');
+    }
+  }
+
+  private async ensureModeloBelongsToMarca(marcaId: string, modeloId: string) {
+    const modelo = await this.prisma.modelo.findUnique({ where: { id: modeloId } });
+    if (!modelo || modelo.marcaId !== marcaId) {
+      throw new ConflictException('El modelo no pertenece a la marca seleccionada');
     }
   }
 }
