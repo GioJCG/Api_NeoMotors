@@ -42,15 +42,17 @@ export class VehiculosController {
   @Get('catalog/marcas')
   @Roles('SuperUsuario', 'AdministradorEmpresa', 'SupervisorSucursal', 'Operador', 'Consulta')
   @ApiOperation({ summary: 'Listar marcas disponibles' })
-  findAllMarcas() {
-    return this.vehiculosService.findAllMarcas();
+  async findAllMarcas() {
+    const data = await this.vehiculosService.findAllMarcas();
+    return this.wrap(data);
   }
 
   @Get('catalog/marcas/:marcaId/modelos')
   @Roles('SuperUsuario', 'AdministradorEmpresa', 'SupervisorSucursal', 'Operador', 'Consulta')
   @ApiOperation({ summary: 'Listar modelos por marca' })
-  findModelosByMarca(@Param('marcaId') marcaId: string) {
-    return this.vehiculosService.findModelosByMarca(marcaId);
+  async findModelosByMarca(@Param('marcaId') marcaId: string) {
+    const data = await this.vehiculosService.findModelosByMarca(marcaId);
+    return this.wrap(data);
   }
 
   @Get(':id')
@@ -79,5 +81,9 @@ export class VehiculosController {
   @ApiOperation({ summary: 'Desactivar vehículo' })
   remove(@Param('id') id: string, @Req() req: Request) {
     return this.vehiculosService.remove(id, req.user as any, req.ip);
+  }
+
+  private wrap<T>(data: T) {
+    return { success: true, data, timestamp: new Date().toISOString() };
   }
 }
