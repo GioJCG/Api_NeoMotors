@@ -164,19 +164,24 @@ export class FiscalService {
     };
   }
 
+  private readonly RFC_REGEX = /^[A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3}$/;
+
+  private extractRfcFromAttr(attr: any): string | null {
+    const raw = String(attr.value).trim();
+    if (this.RFC_REGEX.test(raw)) return raw;
+    const match = raw.match(/([A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3})/);
+    return match ? match[1] : null;
+  }
+
   private extractRfcFromCert(cert: forge.pki.Certificate): string | null {
-    // Try to find RFC in subject attributes (common name or serialNumber field)
     const attrs = cert.subject?.attributes || [];
-    for (const attr of attrs) {
-      if (attr.name === 'serialNumber' || attr.shortName === 'SN') {
-        const val = String(attr.value).trim();
-        if (/^[A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3}$/.test(val)) return val;
-      }
-      if (attr.name === 'commonName' || attr.shortName === 'CN') {
-        const val = String(attr.value).trim();
-        // Sometimes RFC is embedded at the end of CN
-        const match = val.match(/([A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3})/);
-        if (match) return match[1];
+    const priorityOids = ['2.5.4.45', '2.5.4.5', '2.5.4.3'];
+    for (const oid of priorityOids) {
+      for (const attr of attrs) {
+        if (attr.type === oid) {
+          const rfc = this.extractRfcFromAttr(attr);
+          if (rfc) return rfc;
+        }
       }
     }
     return null;
