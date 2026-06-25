@@ -1,3 +1,6 @@
+import * as fs from 'fs';
+import * as path from 'path';
+import * as crypto from 'crypto';
 import {
   Injectable,
   NotFoundException,
@@ -12,10 +15,16 @@ import { UpdateEmpresaDto } from './dto/update-empresa.dto';
 
 @Injectable()
 export class EmpresasService {
+  private readonly uploadDir = path.join(process.cwd(), 'uploads', 'logos');
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditoria: AuditoriaService,
-  ) {}
+  ) {
+    if (!fs.existsSync(this.uploadDir)) {
+      fs.mkdirSync(this.uploadDir, { recursive: true });
+    }
+  }
 
   async create(
     dto: CreateEmpresaDto,
@@ -103,6 +112,16 @@ export class EmpresasService {
       sucursalDefault: sucursal,
       message: 'Empresa creada exitosamente. Bienvenido a NeoMotors.',
     };
+  }
+
+  async saveLogo(file: { buffer: Buffer; originalname: string; mimetype: string; size: number }): Promise<{ url: string; logoUrl: string }> {
+    const ext = path.extname(file.originalname) || '.png';
+    const filename = `${crypto.randomUUID()}${ext}`;
+    const filePath = path.join(this.uploadDir, filename);
+    fs.writeFileSync(filePath, file.buffer);
+
+    const url = `/uploads/logos/${filename}`;
+    return { url, logoUrl: url };
   }
 
   async findAll(user: {
