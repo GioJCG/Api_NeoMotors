@@ -43,7 +43,7 @@ export class ContextController {
   })
   async getBranches(@Query() query: GetBranchesQueryDto, @Req() req: Request) {
     const user = req.user as any;
-    return this.contextService.getUserBranches(user.id, query.empresaId);
+    return this.contextService.getUserBranches(user.id, query.empresaId, user.roles);
   }
 
   @Put('company')

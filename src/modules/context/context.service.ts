@@ -40,12 +40,27 @@ export class ContextService {
     }));
   }
 
-  async getUserBranches(userId: string, empresaId: string) {
+  async getUserBranches(userId: string, empresaId: string, userRoles?: string[]) {
     const empresa = await this.prisma.empresa.findUnique({
       where: { id: empresaId },
     });
     if (!empresa) {
       throw new NotFoundException('Empresa no encontrada');
+    }
+
+    const isAdmin = userRoles?.some((r) => ['SuperUsuario', 'AdministradorEmpresa'].includes(r));
+
+    if (isAdmin) {
+      const sucursales = await this.prisma.sucursal.findMany({
+        where: { empresaId, estado: 'ACTIVA' },
+        orderBy: { nombre: 'asc' },
+      });
+      return sucursales.map((s) => ({
+        id: s.id,
+        nombre: s.nombre,
+        esMatriz: s.esMatriz,
+        activa: s.estado === 'ACTIVA',
+      }));
     }
 
     const asignaciones = await this.prisma.usuarioSucursal.findMany({
@@ -54,12 +69,14 @@ export class ContextService {
       orderBy: { sucursal: { nombre: 'asc' } },
     });
 
-    return asignaciones.map((a) => ({
-      id: a.sucursal.id,
-      nombre: a.sucursal.nombre,
-      esMatriz: a.sucursal.esMatriz,
-      activa: a.activa,
-    }));
+    return asignaciones
+      .filter((a) => a.sucursal.estado === 'ACTIVA')
+      .map((a) => ({
+        id: a.sucursal.id,
+        nombre: a.sucursal.nombre,
+        esMatriz: a.sucursal.esMatriz,
+        activa: a.activa,
+      }));
   }
 
   async setActiveCompany(userId: string, empresaId: string, userRoles?: string[]) {
